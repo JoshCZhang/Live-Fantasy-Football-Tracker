@@ -42,6 +42,18 @@ const TEAM_COLORS = {
   FA:  '#6b7280',
 };
 
+/* ── 2025 NFL Bye Weeks ────────────────────────────────────── */
+const BYE_WEEKS = {
+  ARI:  5,  ATL:  8,  BAL:  8,  BUF:  9,
+  CAR: 10,  CHI:  5,  CIN:  8,  CLE:  7,
+  DAL:  5,  DEN:  5,  DET: 11,  GB:   9,
+  HOU: 10,  IND: 12,  JAX:  9,  KC:  11,
+  LAC:  6,  LAR:  6,  LV:   8,  MIA:  5,
+  MIN:  6,  NE:   7,  NO:   7,  NYG:  9,
+  NYJ: 10,  PHI:  6,  PIT: 11,  SF:  12,
+  SEA: 10,  TB:  12,  TEN: 11,  WAS: 12,
+};
+
 /* ── NFL Team Full Names (for search) ──────────────────────── */
 const TEAM_NAMES = {
   ARI: 'arizona cardinals',    ATL: 'atlanta falcons',       BAL: 'baltimore ravens',
@@ -497,7 +509,7 @@ function buildRow(player) {
         <div class="player-name-info" onclick="openTagEditor(${player.id})" title="Click to edit tags">
           <span class="player-name">${esc(player.name)}</span>
           <span class="player-meta">
-            <span class="player-team">${esc(player.team)}</span>${buildInjuryBadge(player.injuryStatus)}
+            <span class="player-team">${esc(player.team)}${BYE_WEEKS[player.team] ? ` · BYE ${BYE_WEEKS[player.team]}` : ''}</span>${buildInjuryBadge(player.injuryStatus)}
           </span>
         </div>
       </div>
