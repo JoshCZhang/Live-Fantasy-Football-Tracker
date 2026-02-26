@@ -441,29 +441,15 @@ body {
 /* Column widths */
 .col-drag        { width: 32px;  min-width: 32px; }
 .col-rank        { width: 58px;  min-width: 58px; }
-.col-player      { width: auto;  min-width: 200px; }
+.col-player      { width: auto;  min-width: 160px; }
 .col-pos         { width: 68px;  min-width: 68px; }
-.col-myman       { width: 40px;  min-width: 40px; text-align: center; }
-.col-breakout    { width: 40px;  min-width: 40px; text-align: center; }
-.col-bust        { width: 40px;  min-width: 40px; text-align: center; }
-.col-sleep       { width: 40px;  min-width: 40px; text-align: center; }
-.col-value       { width: 40px;  min-width: 40px; text-align: center; }
-.col-injuryprone { width: 40px;  min-width: 40px; text-align: center; }
-.col-rookie      { width: 40px;  min-width: 40px; text-align: center; }
-
-/* Rotate tag column headers — text reads bottom-to-top so any label fits in a narrow column */
-.player-table th.col-myman,
-.player-table th.col-breakout,
-.player-table th.col-bust,
-.player-table th.col-sleep,
-.player-table th.col-value,
-.player-table th.col-injuryprone,
-.player-table th.col-rookie {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  vertical-align: bottom;
-  padding: 10px 13px 8px;
-}
+.col-myman       { width: 78px;  min-width: 78px;  text-align: center; }
+.col-breakout    { width: 90px;  min-width: 90px;  text-align: center; }
+.col-bust        { width: 60px;  min-width: 60px;  text-align: center; }
+.col-sleep       { width: 82px;  min-width: 82px;  text-align: center; }
+.col-value       { width: 68px;  min-width: 68px;  text-align: center; }
+.col-injuryprone { width: 96px;  min-width: 96px;  text-align: center; }
+.col-rookie      { width: 74px;  min-width: 74px;  text-align: center; }
 .col-drafted     { width: 110px; min-width: 110px; }
 .col-pick        { width: 80px;  min-width: 80px; }
 

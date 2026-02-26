@@ -469,13 +469,6 @@ function buildRow(player) {
   // Avatar shows team abbreviation with team colors
   const avatarText = player.team || '?';
 
-  // Inline tag badges (all tags as small chips under player name)
-  const tagBadges = otherTags.map(tag => {
-    const c = TAGS_CONFIG[tag];
-    if (!c) return '';
-    return `<span class="tag-badge-inline" style="background:${c.bg};color:${c.color};border-color:${c.color}40">${c.short}</span>`;
-  }).join('');
-
   const pickInfo = player.isDrafted
     ? `<div class="pick-info">
          <span class="pick-num">${player.draftPick ? '#' + player.draftPick : 'Drafted'}</span>
@@ -504,7 +497,7 @@ function buildRow(player) {
         <div class="player-name-info" onclick="openTagEditor(${player.id})" title="Click to edit tags">
           <span class="player-name">${esc(player.name)}</span>
           <span class="player-meta">
-            <span class="player-team">${esc(player.team)}</span>${buildInjuryBadge(player.injuryStatus)}${tagBadges ? `<span class="player-inline-tags">${tagBadges}</span>` : ''}
+            <span class="player-team">${esc(player.team)}</span>${buildInjuryBadge(player.injuryStatus)}
           </span>
         </div>
       </div>
