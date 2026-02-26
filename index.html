@@ -14,8 +14,8 @@
     <div class="header-brand">
       <div class="brand-icon">🏈</div>
       <div class="brand-text">
-        <span class="brand-title">Fantasy Draft Assistant</span>
-        <span class="brand-sub">Your AI-Powered Drafting Co-Pilot</span>
+        <span class="brand-title">Fantasy Draft Tracker</span>
+        <span class="brand-sub">Like and Subscribe</span>
       </div>
     </div>
 
@@ -42,28 +42,44 @@
 
       <div class="tags-filter-wrap" id="tagsFilterWrap">
         <button class="tags-dropdown-btn" id="tagsDropdownBtn">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-          Columns
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          Tags
           <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <div class="tags-dropdown-menu" id="tagsDropdownMenu">
-          <div class="tags-dropdown-header">Show Columns</div>
-          <div class="col-toggle-item" data-col="myman" id="colToggleMyMan">
+          <div class="tags-dropdown-header">Show Tag Columns</div>
+          <div class="col-toggle-item" data-col="myman">
             <span>⭐ My Man</span>
             <span class="col-toggle-check">✓</span>
           </div>
-          <div class="col-toggle-item" data-col="sleep" id="colToggleSleep">
+          <div class="col-toggle-item" data-col="breakout">
+            <span>🚀 Breakout</span>
+            <span class="col-toggle-check">✓</span>
+          </div>
+          <div class="col-toggle-item" data-col="bust">
+            <span>💣 Bust</span>
+            <span class="col-toggle-check">✓</span>
+          </div>
+          <div class="col-toggle-item" data-col="sleep">
             <span>😴 Sleeper</span>
+            <span class="col-toggle-check">✓</span>
+          </div>
+          <div class="col-toggle-item" data-col="value">
+            <span>💎 Value</span>
+            <span class="col-toggle-check">✓</span>
+          </div>
+          <div class="col-toggle-item" data-col="injuryprone">
+            <span>🩹 Injury Prone</span>
+            <span class="col-toggle-check">✓</span>
+          </div>
+          <div class="col-toggle-item" data-col="rookie">
+            <span>🌟 Rookie</span>
             <span class="col-toggle-check">✓</span>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="header-brand-right">
-      <span class="brand-right-title">Fantasy Draft Tracker</span>
-      <span class="brand-right-sub">Like and Subscribe</span>
-    </div>
   </header>
 
   <!-- ===== CONNECTION BAR ===== -->
@@ -105,8 +121,13 @@
             <th class="col-rank" title="Your custom ranking">RANK</th>
             <th class="col-player">PLAYER</th>
             <th class="col-pos">POS</th>
-            <th class="col-myman" title="My Man — must-have target">MY MAN</th>
-            <th class="col-sleep" title="Sleeper pick tag">SLEEPER</th>
+            <th class="col-myman" title="My Man">⭐</th>
+            <th class="col-breakout" title="Breakout">🚀</th>
+            <th class="col-bust" title="Bust">💣</th>
+            <th class="col-sleep" title="Sleeper">😴</th>
+            <th class="col-value" title="Value">💎</th>
+            <th class="col-injuryprone" title="Injury Prone">🩹</th>
+            <th class="col-rookie" title="Rookie">🌟</th>
             <th class="col-drafted">DRAFTED?</th>
             <th class="col-pick">PICK</th>
           </tr>

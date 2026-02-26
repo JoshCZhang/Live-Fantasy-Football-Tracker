@@ -431,17 +431,29 @@ function renderPlayers() {
   }
 }
 
+function tagTd(player, tagName, colClass) {
+  const cfg    = TAGS_CONFIG[tagName];
+  const active = player.tags.includes(tagName);
+  const shadow = active ? `filter:drop-shadow(0 0 4px ${cfg.color})` : '';
+  return `<td class="${colClass}">` +
+    `<button class="tag-col-btn${active ? ' active' : ''}" ` +
+    `onclick="toggleTag(${player.id}, '${tagName}')" ` +
+    `title="${tagName}" ` +
+    `${active ? `style="${shadow}"` : ''}>` +
+    `${active ? cfg.icon : '·'}` +
+    `</button></td>`;
+}
+
 function buildRow(player) {
-  const posColor   = POS_COLORS[player.position] || '#6b7280';
-  const teamColor  = TEAM_COLORS[player.team] || posColor;
-  const isMyMan    = player.tags.includes('My Man');
-  const isSleeper  = player.tags.includes('Sleeper');
-  const otherTags  = player.tags.filter(t => t !== 'My Man' && t !== 'Sleeper');
+  const posColor  = POS_COLORS[player.position] || '#6b7280';
+  const teamColor = TEAM_COLORS[player.team] || posColor;
+  const isMyMan   = player.tags.includes('My Man');
+  const otherTags = player.tags;
 
   // Avatar shows team abbreviation with team colors
   const avatarText = player.team || '?';
 
-  // Inline tag badges shown in the player cell (under name)
+  // Inline tag badges (all tags as small chips under player name)
   const tagBadges = otherTags.map(tag => {
     const c = TAGS_CONFIG[tag];
     if (!c) return '';
@@ -484,20 +496,13 @@ function buildRow(player) {
     <td class="col-pos">
       <span class="pos-badge" style="background:${posColor}">${player.position}</span>
     </td>
-    <td class="col-myman">
-      <button class="myman-btn ${isMyMan ? 'active' : ''}"
-              onclick="toggleTag(${player.id}, 'My Man')"
-              title="${isMyMan ? 'Remove My Man' : 'Tag as My Man'}">
-        ${isMyMan ? '⭐' : '☆'}
-      </button>
-    </td>
-    <td class="col-sleep">
-      <button class="sleep-btn ${isSleeper ? 'active' : ''}"
-              onclick="toggleTag(${player.id}, 'Sleeper')"
-              title="${isSleeper ? 'Remove Sleeper tag' : 'Tag as Sleeper'}">
-        ${isSleeper ? '😴' : '·'}
-      </button>
-    </td>
+    ${tagTd(player, 'My Man',       'col-myman')}
+    ${tagTd(player, 'Breakout',     'col-breakout')}
+    ${tagTd(player, 'Bust',         'col-bust')}
+    ${tagTd(player, 'Sleeper',      'col-sleep')}
+    ${tagTd(player, 'Value',        'col-value')}
+    ${tagTd(player, 'Injury Prone', 'col-injuryprone')}
+    ${tagTd(player, 'Rookie',       'col-rookie')}
     <td class="col-drafted">
       <button class="drafted-btn ${player.isDrafted ? 'is-drafted' : ''}"
               onclick="toggleDrafted(${player.id})">
