@@ -443,13 +443,27 @@ body {
 .col-rank        { width: 58px;  min-width: 58px; }
 .col-player      { width: auto;  min-width: 200px; }
 .col-pos         { width: 68px;  min-width: 68px; }
-.col-myman       { width: 52px;  min-width: 52px; text-align: center; }
-.col-breakout    { width: 52px;  min-width: 52px; text-align: center; }
-.col-bust        { width: 52px;  min-width: 52px; text-align: center; }
-.col-sleep       { width: 52px;  min-width: 52px; text-align: center; }
-.col-value       { width: 52px;  min-width: 52px; text-align: center; }
-.col-injuryprone { width: 52px;  min-width: 52px; text-align: center; }
-.col-rookie      { width: 52px;  min-width: 52px; text-align: center; }
+.col-myman       { width: 40px;  min-width: 40px; text-align: center; }
+.col-breakout    { width: 40px;  min-width: 40px; text-align: center; }
+.col-bust        { width: 40px;  min-width: 40px; text-align: center; }
+.col-sleep       { width: 40px;  min-width: 40px; text-align: center; }
+.col-value       { width: 40px;  min-width: 40px; text-align: center; }
+.col-injuryprone { width: 40px;  min-width: 40px; text-align: center; }
+.col-rookie      { width: 40px;  min-width: 40px; text-align: center; }
+
+/* Rotate tag column headers — text reads bottom-to-top so any label fits in a narrow column */
+.player-table th.col-myman,
+.player-table th.col-breakout,
+.player-table th.col-bust,
+.player-table th.col-sleep,
+.player-table th.col-value,
+.player-table th.col-injuryprone,
+.player-table th.col-rookie {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  vertical-align: bottom;
+  padding: 10px 13px 8px;
+}
 .col-drafted     { width: 110px; min-width: 110px; }
 .col-pick        { width: 80px;  min-width: 80px; }
 
