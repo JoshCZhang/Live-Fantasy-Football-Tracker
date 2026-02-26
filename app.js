@@ -33,7 +33,7 @@ const POS_COLORS = {
 const TEAM_COLORS = {
   ARI: '#97233F', ATL: '#A71930', BAL: '#241773', BUF: '#00338D',
   CAR: '#0085CA', CHI: '#C83803', CIN: '#FB4F14', CLE: '#FF3C00',
-  DAL: '#003594', DEN: '#FB4F14', DET: '#0076B6', GB:  '#FFB612',
+  DAL: '#003594', DEN: '#FB4F14', DET: '#0076B6', GB:  '#203731',
   HOU: '#A71930', IND: '#4d7ab5', JAX: '#D7A22A', KC:  '#E31837',
   LAC: '#0080C6', LAR: '#FFA300', LV:  '#A5ACAF', MIA: '#008E97',
   MIN: '#4F2683', NE:  '#C60C30', NO:  '#D3BC8D', NYG: '#0B2265',
@@ -1694,25 +1694,45 @@ async function fetchSleeperPlayerList() {
 }
 
 function parseSleeperPlayerResponse(raw) {
-  const VALID = new Set(['QB', 'RB', 'WR', 'TE', 'K', 'DEF']);
+  const SKILL = new Set(['QB', 'RB', 'WR', 'TE', 'K']);
+  const all   = Object.values(raw);
 
-  return Object.values(raw)
+  // Skill position players — ranked by Sleeper's search_rank
+  const skillPlayers = all
     .filter(p =>
       p.active !== false &&
-      VALID.has(p.position) &&
+      SKILL.has(p.position) &&
       p.search_rank != null && p.search_rank > 0 &&
       (p.full_name || (p.first_name && p.last_name))
     )
     .sort((a, b) => (a.search_rank || 9999) - (b.search_rank || 9999))
-    .slice(0, 300)
-    .map((p, i) => ({
+    .map(p => ({
       sleeperId:    p.player_id,
       name:         (p.full_name || `${p.first_name} ${p.last_name}`).trim(),
       team:         p.team || 'FA',
-      position:     p.position === 'DEF' ? 'DST' : p.position,
-      sleeperRank:  i + 1,
+      position:     p.position,
       injuryStatus: p.injury_status || null,
     }));
+
+  // DST — include all 32 active team defenses regardless of search_rank
+  const seenDst = new Set();
+  const dstPlayers = all
+    .filter(p => p.position === 'DEF' && p.team && !seenDst.has(p.team) && seenDst.add(p.team))
+    .sort((a, b) => (a.search_rank || 9999) - (b.search_rank || 9999))
+    .map(p => ({
+      sleeperId:    p.player_id,
+      name:         p.full_name || (TEAM_NAMES[p.team]
+                      ? TEAM_NAMES[p.team].replace(/\b\w/g, c => c.toUpperCase())
+                      : p.team + ' Defense'),
+      team:         p.team,
+      position:     'DST',
+      injuryStatus: null,
+    }));
+
+  return [...skillPlayers, ...dstPlayers].map((p, i) => ({
+    ...p,
+    sleeperRank: i + 1,
+  }));
 }
 
 /** Build full player list from Sleeper data (first load / no saved state) */
