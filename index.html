@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fantasy Draft Assistant</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ===== HEADER ===== -->
+  <header class="header">
+    <div class="header-brand">
+      <div class="brand-icon">🏈</div>
+      <div class="brand-text">
+        <span class="brand-title">Fantasy Draft Assistant</span>
+        <span class="brand-sub">Your AI-Powered Drafting Co-Pilot</span>
+      </div>
+    </div>
+
+    <div class="header-search">
+      <div class="search-wrapper">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" id="searchInput" class="search-input" placeholder="Search players, teams, or positions..." autocomplete="off">
+        <button class="search-clear" id="searchClear" title="Clear search">×</button>
+      </div>
+    </div>
+
+    <div class="header-controls">
+      <div class="pos-filters" id="posFilters">
+        <button class="pos-btn active" data-pos="ALL">ALL</button>
+        <button class="pos-btn qb" data-pos="QB">QB</button>
+        <button class="pos-btn rb" data-pos="RB">RB</button>
+        <button class="pos-btn wr" data-pos="WR">WR</button>
+        <button class="pos-btn te" data-pos="TE">TE</button>
+        <button class="pos-btn k"  data-pos="K">K</button>
+        <button class="pos-btn dst" data-pos="DST">DST</button>
+      </div>
+
+      <div class="tags-filter-wrap" id="tagsFilterWrap">
+        <button class="tags-dropdown-btn" id="tagsDropdownBtn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          Tags <span id="tagFilterCount"></span>
+          <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="tags-dropdown-menu" id="tagsDropdownMenu">
+          <div class="tags-dropdown-header">Filter by Tag</div>
+          <div id="tagFilterOptions"></div>
+          <div class="tags-dropdown-actions">
+            <button class="tags-clear-btn" id="tagsClearBtn">Clear All</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== CONNECTION BAR ===== -->
+  <div class="connection-bar">
+    <div class="connection-left">
+      <div class="status-indicator" id="statusIndicator">
+        <span class="status-dot" id="statusDot"></span>
+        <span class="status-text" id="statusText">Not Connected</span>
+      </div>
+      <button class="btn btn-connect" id="connectBtn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z"/><path d="M8 2v16"/><path d="M16 6v16"/></svg>
+        Connect to Draft
+      </button>
+      <div class="last-updated" id="lastUpdated"></div>
+    </div>
+    <div class="connection-right">
+      <label class="toggle-wrap">
+        <input type="checkbox" id="showDraftedToggle" checked>
+        <span class="toggle-label">Show Drafted</span>
+      </label>
+      <button class="btn btn-ghost" id="saveRankingsBtn" title="Save/load ranking snapshots">📋 Rankings</button>
+      <button class="btn btn-ghost" id="importBtn" title="Import rankings">↑ Import</button>
+      <button class="btn btn-ghost" id="exportBtn" title="Export rankings">↓ Export</button>
+      <button class="btn btn-danger" id="resetDraftBtn" title="Reset all draft picks">Reset Draft</button>
+    </div>
+  </div>
+
+  <!-- ===== LIVE PICK TICKER ===== -->
+  <div class="pick-ticker" id="pickTicker">
+    <span class="ticker-live">● LIVE</span>
+    <div class="ticker-scroll" id="tickerScroll">
+      <div class="ticker-inner" id="tickerInner"></div>
+    </div>
+  </div>
+
+  <!-- ===== MAIN TABLE ===== -->
+  <main class="main-content">
+    <div class="table-container">
+      <table class="player-table" id="playerTable">
+        <thead>
+          <tr>
+            <th class="col-drag"></th>
+            <th class="col-rank" title="Your custom ranking">RANK</th>
+            <th class="col-player">PLAYER</th>
+            <th class="col-pos">POS</th>
+            <th class="col-myman" title="My Man — must-have target">MY MAN</th>
+            <th class="col-sleep" title="Sleeper pick tag">SLEEPER</th>
+            <th class="col-drafted">DRAFTED?</th>
+            <th class="col-pick">PICK</th>
+          </tr>
+        </thead>
+        <tbody id="playerTableBody"></tbody>
+      </table>
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">🔍</div>
+        <p>No players found matching your filters.</p>
+        <button class="btn btn-ghost" id="clearFiltersBtn">Clear filters</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== DRAFT STATS BAR ===== -->
+  <div class="stats-bar" id="statsBar">
+    <span id="statTotal"></span>
+    <span id="statDrafted"></span>
+    <span id="statAvailable"></span>
+    <span id="statMyMan"></span>
+    <span class="stats-spacer"></span>
+    <span id="dataFreshness"></span>
+    <button class="btn btn-ghost btn-sm" id="refreshPlayersBtn" title="Force refresh player data from Sleeper">↻ Sync Players</button>
+  </div>
+
+</div><!-- #app -->
+
+<!-- ===== MODAL: CONNECT TO DRAFT ===== -->
+<div class="modal-overlay" id="connectModal">
+  <div class="modal modal-connect">
+    <div class="modal-header">
+      <h2>Connect to Live Draft</h2>
+      <button class="modal-close" data-modal="connectModal">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="platform-tabs" id="platformTabs">
+        <button class="platform-tab active" data-platform="sleeper">
+          <span class="platform-icon">💤</span> Sleeper
+        </button>
+        <button class="platform-tab" data-platform="espn">
+          <span class="platform-icon">🏆</span> ESPN
+        </button>
+        <button class="platform-tab" data-platform="yahoo">
+          <span class="platform-icon">🟣</span> Yahoo
+        </button>
+        <button class="platform-tab" data-platform="nfl">
+          <span class="platform-icon">🏈</span> NFL
+        </button>
+        <button class="platform-tab" data-platform="manual">
+          <span class="platform-icon">✋</span> Manual
+        </button>
+      </div>
+
+      <div class="platform-config" id="cfg-sleeper">
+        <p class="cfg-desc">Paste your Sleeper draft URL or enter the draft ID directly.</p>
+        <label class="input-label">Draft URL or ID</label>
+        <input type="text" id="sleeperInput" class="cfg-input" placeholder="https://sleeper.com/draft/nfl/123456789  or  123456789">
+        <p class="cfg-note cfg-success">✓ Real-time WebSocket updates supported. Polls every 10 seconds as backup.</p>
+      </div>
+
+      <div class="platform-config hidden" id="cfg-espn">
+        <p class="cfg-desc">Enter your ESPN Fantasy Football league details.</p>
+        <label class="input-label">League ID</label>
+        <input type="text" id="espnLeagueInput" class="cfg-input" placeholder="e.g. 12345678">
+        <label class="input-label">Season Year</label>
+        <input type="text" id="espnYearInput" class="cfg-input" placeholder="2025" value="2025">
+        <p class="cfg-note cfg-warn">⚠ ESPN restricts cross-origin requests for private leagues. Works best for public leagues. Updates poll every 15 seconds.</p>
+      </div>
+
+      <div class="platform-config hidden" id="cfg-yahoo">
+        <p class="cfg-desc">Enter your Yahoo Fantasy league details. You must be logged into Yahoo Fantasy in this browser for live pick tracking to work.</p>
+        <label class="input-label">League Key</label>
+        <input type="text" id="yahooLeagueKeyInput" class="cfg-input" placeholder="e.g. 449.l.12345678">
+        <label class="input-label">Season Year</label>
+        <input type="text" id="yahooYearInput" class="cfg-input" placeholder="2025" value="2025">
+        <p class="cfg-note cfg-warn">⚠ Yahoo Fantasy requires you to be logged in. Polls draft results every 15 seconds. Private leagues may need Yahoo login cookies present in this browser session.</p>
+      </div>
+
+      <div class="platform-config hidden" id="cfg-nfl">
+        <p class="cfg-desc">Enter your NFL Fantasy league details. You must be logged into NFL.com in this browser for live pick tracking.</p>
+        <label class="input-label">League ID</label>
+        <input type="text" id="nflLeagueIdInput" class="cfg-input" placeholder="e.g. 1234567890">
+        <label class="input-label">Season Year</label>
+        <input type="text" id="nflYearInput" class="cfg-input" placeholder="2025" value="2025">
+        <p class="cfg-note cfg-warn">⚠ NFL Fantasy requires an active login session. Polls draft results every 15 seconds. Ensure you are logged into NFL.com in this browser.</p>
+      </div>
+
+      <div class="platform-config hidden" id="cfg-manual">
+        <p class="cfg-desc">Manually track your draft by clicking <strong>Mark Drafted</strong> next to any player as picks are made.</p>
+        <p class="cfg-note cfg-success">✓ Always works — no external connection needed.</p>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-ghost" data-modal="connectModal">Cancel</button>
+        <button class="btn btn-primary" id="startConnectionBtn">Connect</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: TAG EDITOR ===== -->
+<div class="modal-overlay" id="tagModal">
+  <div class="modal modal-tags">
+    <div class="modal-header">
+      <h2 id="tagModalTitle">Edit Player Tags</h2>
+      <button class="modal-close" data-modal="tagModal">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="tag-editor" id="tagEditor"></div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" data-modal="tagModal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: SAVE RANKINGS ===== -->
+<div class="modal-overlay" id="saveRankingsModal">
+  <div class="modal modal-save-rankings">
+    <div class="modal-header">
+      <h2>📋 Saved Rankings</h2>
+      <button class="modal-close" data-modal="saveRankingsModal">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="cfg-desc">Save up to 3 ranking snapshots. Rankings, tags, and draft state are all preserved.</p>
+      <div id="savedRankingSlots"></div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" data-modal="saveRankingsModal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: IMPORT ===== -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal modal-import">
+    <div class="modal-header">
+      <h2>Import Rankings</h2>
+      <button class="modal-close" data-modal="importModal">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="cfg-desc">Paste player rankings in CSV format. One player per line: <code>Name, Team, Position</code>  (rank is determined by order)</p>
+      <textarea id="importTextarea" class="import-textarea" placeholder="Josh Allen, BUF, QB&#10;Ja'Marr Chase, CIN, WR&#10;Saquon Barkley, PHI, RB&#10;..."></textarea>
+      <p class="cfg-note cfg-warn">⚠ This will replace your current rankings. Draft picks and tags are preserved if player names match.</p>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" data-modal="importModal">Cancel</button>
+        <button class="btn btn-primary" id="importConfirmBtn">Import Rankings</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div class="toast" id="toast"></div>
+
+<!-- ===== LOADING OVERLAY (first-ever load) ===== -->
+<div class="loading-overlay" id="loadingOverlay" style="display:none">
+  <div class="loading-box">
+    <div class="loading-spinner"></div>
+    <p class="loading-title">Fetching Player Data</p>
+    <p class="loading-msg" id="loadingMsg">Loading latest NFL players from Sleeper…</p>
+    <p class="loading-sub">This only happens once — player data is cached for 24 hours.</p>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
