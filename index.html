@@ -42,18 +42,27 @@
 
       <div class="tags-filter-wrap" id="tagsFilterWrap">
         <button class="tags-dropdown-btn" id="tagsDropdownBtn">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-          Tags <span id="tagFilterCount"></span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          Columns
           <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <div class="tags-dropdown-menu" id="tagsDropdownMenu">
-          <div class="tags-dropdown-header">Filter by Tag</div>
-          <div id="tagFilterOptions"></div>
-          <div class="tags-dropdown-actions">
-            <button class="tags-clear-btn" id="tagsClearBtn">Clear All</button>
+          <div class="tags-dropdown-header">Show Columns</div>
+          <div class="col-toggle-item" data-col="myman" id="colToggleMyMan">
+            <span>⭐ My Man</span>
+            <span class="col-toggle-check">✓</span>
+          </div>
+          <div class="col-toggle-item" data-col="sleep" id="colToggleSleep">
+            <span>😴 Sleeper</span>
+            <span class="col-toggle-check">✓</span>
           </div>
         </div>
       </div>
+    </div>
+
+    <div class="header-brand-right">
+      <span class="brand-right-title">Fantasy Draft Tracker</span>
+      <span class="brand-right-sub">Like and Subscribe</span>
     </div>
   </header>
 
@@ -71,11 +80,7 @@
       <div class="last-updated" id="lastUpdated"></div>
     </div>
     <div class="connection-right">
-      <label class="toggle-wrap">
-        <input type="checkbox" id="showDraftedToggle" checked>
-        <span class="toggle-label">Show Drafted</span>
-      </label>
-      <button class="btn btn-ghost" id="saveRankingsBtn" title="Save/load ranking snapshots">📋 Rankings</button>
+      <button class="btn btn-ghost" id="saveRankingsBtn" title="Save/load ranking snapshots">📋 Saved Rankings</button>
       <button class="btn btn-ghost" id="importBtn" title="Import rankings">↑ Import</button>
       <button class="btn btn-ghost" id="exportBtn" title="Export rankings">↓ Export</button>
       <button class="btn btn-danger" id="resetDraftBtn" title="Reset all draft picks">Reset Draft</button>

@@ -106,6 +106,26 @@ body {
   white-space: nowrap;
 }
 
+.header-brand-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+  gap: 2px;
+  margin-left: auto;
+}
+.brand-right-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+}
+.brand-right-sub {
+  font-size: 11px;
+  color: var(--tag-myman);
+  white-space: nowrap;
+}
+
 .header-search {
   flex: 1;
   min-width: 180px;
@@ -257,15 +277,26 @@ body {
   padding: 6px 12px 8px;
   border-top: 1px solid var(--border2);
 }
-.tags-clear-btn {
-  background: none;
-  border: none;
-  color: var(--text3);
-  font-size: 12px;
+.col-toggle-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 12px;
   cursor: pointer;
-  padding: 2px 0;
+  font-size: 13px;
+  color: var(--text2);
+  transition: background .1s;
 }
-.tags-clear-btn:hover { color: var(--text); }
+.col-toggle-item:hover { background: var(--bg-hover); color: var(--text); }
+.col-toggle-item .col-toggle-check { display: none; color: var(--ok); font-size: 14px; }
+.col-toggle-item.active { color: var(--text); }
+.col-toggle-item.active .col-toggle-check { display: block; }
+
+/* Column visibility: hidden by default, shown via table class */
+.player-table .col-myman { display: none; }
+.player-table .col-sleep { display: none; }
+.player-table.show-myman .col-myman { display: table-cell; }
+.player-table.show-sleep .col-sleep { display: table-cell; }
 
 /* ============================================================
    CONNECTION BAR
@@ -438,12 +469,7 @@ body {
 .player-row.dragging  { opacity: .4; }
 
 /* Drafted state */
-.player-row.drafted {
-  opacity: .45;
-  background: #0d1117;
-}
-.player-row.drafted .player-name { text-decoration: line-through; color: var(--text3); }
-.player-row.drafted .pos-badge   { filter: grayscale(.8); }
+.player-row.drafted .player-name { color: #C41E3A; }
 
 /* My Man highlight */
 .player-row.my-man { background: rgba(245,158,11,.04); }

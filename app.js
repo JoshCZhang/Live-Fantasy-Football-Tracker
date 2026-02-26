@@ -223,9 +223,7 @@ const DEFAULT_PLAYERS_RAW = [
 let state = {
   players:     [],       // Full player objects with custom data
   posFilter:   'ALL',    // Position filter
-  tagFilter:   [],       // Active tag filters (OR logic)
   searchQuery: '',       // Search string
-  showDrafted: true,     // Whether to show drafted players
   connection: {
     platform:      null,       // 'sleeper' | 'espn' | 'manual'
     draftId:       null,
@@ -256,9 +254,8 @@ const SAVED_RANKINGS_KEY  = 'fantasySavedRankings_v1';
 function saveState() {
   try {
     const data = {
-      players:     state.players,
-      showDrafted: state.showDrafted,
-      nextId:      state.nextId,
+      players: state.players,
+      nextId:  state.nextId,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch(e) { console.warn('Save failed', e); }
@@ -269,9 +266,8 @@ function loadState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const data = JSON.parse(raw);
-      state.players     = data.players     || initDefaultPlayers();
-      state.showDrafted = data.showDrafted !== undefined ? data.showDrafted : true;
-      state.nextId      = data.nextId      || 146;
+      state.players = data.players || initDefaultPlayers();
+      state.nextId  = data.nextId  || 146;
       return;
     }
   } catch(e) { console.warn('Load failed', e); }
@@ -406,12 +402,6 @@ function getDisplayPlayers() {
     );
   }
 
-  if (state.tagFilter.length > 0)
-    list = list.filter(p => state.tagFilter.some(t => p.tags.includes(t)));
-
-  if (!state.showDrafted)
-    list = list.filter(p => !p.isDrafted);
-
   return list;
 }
 
@@ -482,7 +472,7 @@ function buildRow(player) {
     </td>
     <td class="col-player">
       <div class="player-info">
-        <div class="player-avatar" style="background:${teamColor}25;color:${teamColor};border:1px solid ${teamColor}40;font-size:10px;letter-spacing:-.3px">${esc(avatarText)}</div>
+        <div class="player-avatar" style="background:${teamColor};color:#fff;font-size:10px;letter-spacing:-.3px">${esc(avatarText)}</div>
         <div class="player-name-info" onclick="openTagEditor(${player.id})" title="Click to edit tags">
           <span class="player-name">${esc(player.name)}</span>
           <span class="player-meta">
@@ -1423,7 +1413,7 @@ function initEventListeners() {
     renderStats();
   });
 
-  // Tags dropdown
+  // Columns dropdown
   const tagsBtn  = document.getElementById('tagsDropdownBtn');
   const tagsMenu = document.getElementById('tagsDropdownMenu');
   tagsBtn.addEventListener('click', (e) => {
@@ -1437,20 +1427,15 @@ function initEventListeners() {
       tagsMenu.classList.remove('open');
     }
   });
-  document.getElementById('tagsClearBtn').addEventListener('click', () => {
-    state.tagFilter = [];
-    document.querySelectorAll('#tagFilterOptions input').forEach(cb => cb.checked = false);
-    updateTagFilterCount();
-    renderPlayers();
-    renderStats();
-  });
 
-  // Show Drafted toggle
-  document.getElementById('showDraftedToggle').addEventListener('change', (e) => {
-    state.showDrafted = e.target.checked;
-    saveState();
-    renderPlayers();
-    renderStats();
+  // Column visibility toggles
+  document.querySelectorAll('.col-toggle-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const col = item.dataset.col;
+      const table = document.getElementById('playerTable');
+      const isActive = item.classList.toggle('active');
+      table.classList.toggle(`show-${col}`, isActive);
+    });
   });
 
   // Connect button
@@ -1539,12 +1524,9 @@ function initEventListeners() {
   document.getElementById('clearFiltersBtn').addEventListener('click', () => {
     state.posFilter   = 'ALL';
     state.searchQuery = '';
-    state.tagFilter   = [];
     document.querySelectorAll('.pos-btn').forEach(b => b.classList.toggle('active', b.dataset.pos === 'ALL'));
     document.getElementById('searchInput').value = '';
     document.getElementById('searchClear').style.display = 'none';
-    document.querySelectorAll('#tagFilterOptions input').forEach(cb => cb.checked = false);
-    updateTagFilterCount();
     renderAll();
   });
 
@@ -1864,10 +1846,7 @@ function scheduleNextRefresh() {
 
 async function init() {
   loadState();
-  buildTagFilterOptions();
   initEventListeners();
-
-  document.getElementById('showDraftedToggle').checked = state.showDrafted;
 
   // Render immediately with whatever we have
   renderAll();
