@@ -17,7 +17,7 @@ const TAGS_CONFIG = {
   'Sleeper':      { color: '#8b5cf6', bg: 'rgba(139,92,246,.15)', icon: '😴', short: 'SLP' },
   'Value':        { color: '#3b82f6', bg: 'rgba(59,130,246,.15)', icon: '💎', short: 'VAL' },
   'Injury Prone': { color: '#f97316', bg: 'rgba(249,115,22,.15)', icon: '🩹', short: 'INJ' },
-  'Rookie':       { color: '#06b6d4', bg: 'rgba(6,182,212,.15)',  icon: '🌟', short: 'RK' },
+  'Rookie':       { color: '#06b6d4', bg: 'rgba(6,182,212,.15)',  icon: '🎓', short: 'RK' },
 };
 
 const POS_COLORS = {
@@ -31,15 +31,30 @@ const POS_COLORS = {
 
 /* ── NFL Team Colors ───────────────────────────────────────── */
 const TEAM_COLORS = {
-  ARI: '#97233F', ATL: '#A71930', BAL: '#9E7C0C', BUF: '#C60C30',
+  ARI: '#97233F', ATL: '#A71930', BAL: '#241773', BUF: '#00338D',
   CAR: '#0085CA', CHI: '#C83803', CIN: '#FB4F14', CLE: '#FF3C00',
-  DAL: '#869397', DEN: '#FB4F14', DET: '#0076B6', GB:  '#FFB612',
+  DAL: '#003594', DEN: '#FB4F14', DET: '#0076B6', GB:  '#FFB612',
   HOU: '#A71930', IND: '#4d7ab5', JAX: '#D7A22A', KC:  '#E31837',
   LAC: '#0080C6', LAR: '#FFA300', LV:  '#A5ACAF', MIA: '#008E97',
-  MIN: '#FFC62F', NE:  '#C60C30', NO:  '#D3BC8D', NYG: '#A71930',
-  NYJ: '#2e8b6e', PHI: '#A5ACAF', PIT: '#FFB612', SF:  '#AA0000',
-  SEA: '#69BE28', TB:  '#D50A0A', TEN: '#4B92DB', WAS: '#FFB612',
+  MIN: '#4F2683', NE:  '#C60C30', NO:  '#D3BC8D', NYG: '#0B2265',
+  NYJ: '#2e8b6e', PHI: '#004C54', PIT: '#FFB612', SF:  '#AA0000',
+  SEA: '#69BE28', TB:  '#D50A0A', TEN: '#4B92DB', WAS: '#5A1414',
   FA:  '#6b7280',
+};
+
+/* ── NFL Team Full Names (for search) ──────────────────────── */
+const TEAM_NAMES = {
+  ARI: 'arizona cardinals',    ATL: 'atlanta falcons',       BAL: 'baltimore ravens',
+  BUF: 'buffalo bills',        CAR: 'carolina panthers',     CHI: 'chicago bears',
+  CIN: 'cincinnati bengals',   CLE: 'cleveland browns',      DAL: 'dallas cowboys',
+  DEN: 'denver broncos',       DET: 'detroit lions',         GB:  'green bay packers',
+  HOU: 'houston texans',       IND: 'indianapolis colts',    JAX: 'jacksonville jaguars',
+  KC:  'kansas city chiefs',   LAC: 'los angeles chargers',  LAR: 'los angeles rams',
+  LV:  'las vegas raiders',    MIA: 'miami dolphins',        MIN: 'minnesota vikings',
+  NE:  'new england patriots', NO:  'new orleans saints',    NYG: 'new york giants',
+  NYJ: 'new york jets',        PHI: 'philadelphia eagles',   PIT: 'pittsburgh steelers',
+  SF:  'san francisco 49ers',  SEA: 'seattle seahawks',      TB:  'tampa bay buccaneers',
+  TEN: 'tennessee titans',     WAS: 'washington commanders', FA:  'free agent',
 };
 
 /* ── Player-data cache ─────────────────────────────────────── */
@@ -398,7 +413,8 @@ function getDisplayPlayers() {
     list = list.filter(p =>
       p.name.toLowerCase().includes(q) ||
       p.team.toLowerCase().includes(q) ||
-      p.position.toLowerCase().includes(q)
+      p.position.toLowerCase().includes(q) ||
+      (TEAM_NAMES[p.team] || '').includes(q)
     );
   }
 
