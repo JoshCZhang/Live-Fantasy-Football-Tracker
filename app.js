@@ -352,11 +352,9 @@ function renderSavedRankingSlots() {
   if (!container) return;
   container.innerHTML = slots.map((slot, i) => {
     const hasData = !!slot.players;
-    const meta    = hasData
-      ? `${slot.players.length} players · saved ${timeAgo(slot.timestamp)}`
-      : 'Not saved yet';
+    const meta    = hasData ? 'Saved list' : 'Not saved yet';
     return `
-      <div class="ranking-slot">
+      <div class="ranking-slot${hasData ? ' ranking-slot--saved' : ''}">
         <div class="slot-header">
           <input class="slot-name-input" type="text" value="${esc(slot.name)}"
             onchange="renameRankingSlot(${i}, this.value)"

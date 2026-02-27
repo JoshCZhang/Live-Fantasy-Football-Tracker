@@ -790,6 +790,10 @@ body {
   gap: 10px;
 }
 .ranking-slot + .ranking-slot { margin-top: 10px; }
+.ranking-slot--saved {
+  border-color: rgba(34,197,94,.5);
+  background: rgba(34,197,94,.07);
+}
 .slot-header {
   display: flex;
   align-items: center;
