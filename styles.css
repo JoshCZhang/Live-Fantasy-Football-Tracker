@@ -464,7 +464,8 @@ body {
 .player-row.dragging  { opacity: .4; }
 
 /* Drafted state */
-.player-row.drafted .player-name { color: #C41E3A; }
+.player-row.drafted { background: rgba(196,30,58,.1); }
+.player-row.drafted:hover { background: rgba(196,30,58,.15); }
 
 /* My Man highlight */
 .player-row.my-man { background: rgba(245,158,11,.04); }
@@ -790,6 +791,10 @@ body {
   gap: 10px;
 }
 .ranking-slot + .ranking-slot { margin-top: 10px; }
+.ranking-slot--saved {
+  border-color: rgba(34,197,94,.5);
+  background: rgba(34,197,94,.07);
+}
 .slot-header {
   display: flex;
   align-items: center;
