@@ -282,12 +282,12 @@ function loadState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const data = JSON.parse(raw);
-      state.players = data.players || initDefaultPlayers();
+      state.players = data.players || [];
       state.nextId  = data.nextId  || 146;
       return;
     }
   } catch(e) { console.warn('Load failed', e); }
-  state.players = initDefaultPlayers();
+  state.players = [];
 }
 
 /* ── Saved Rankings (3 independent slots) ──────────────────── */
