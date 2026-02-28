@@ -388,6 +388,8 @@ function initDefaultPlayers() {
     team:         p.team,
     position:     p.position,
     rank:         i + 1,
+    sleeperRank:  i + 1,
+    rankLocked:   false,
     tags:         [],
     isDrafted:    false,
     draftPick:    null,
@@ -746,7 +748,8 @@ function onDrop(e) {
   const insertAt = sorted.findIndex(p => p.id === tgtId);
   sorted.splice(insertAt + (srcIdx < tgtIdx ? 1 : 0), 0, src);
 
-  // Reassign ranks
+  // Mark as manually ranked and reassign ranks
+  src.rankLocked = true;
   sorted.forEach((p, i) => { p.rank = i + 1; });
 
   saveState();
@@ -806,6 +809,7 @@ function applyRankEdit(playerId, newRank) {
   const oldIdx = sorted.findIndex(p => p.id === playerId);
   sorted.splice(oldIdx, 1);
   sorted.splice(newRank - 1, 0, player);
+  player.rankLocked = true;
   sorted.forEach((p, i) => { p.rank = i + 1; });
 
   saveState();
@@ -1637,8 +1641,12 @@ async function checkAndRefreshPlayers() {
 
   if (isFresh && cached?.players?.length) {
     // ── Fresh cache: apply metadata updates silently ──────────
-    if (isFirstLoad) buildPlayersFromSleeperList(cached.players);
-    else             applyPlayerMetadata(cached.players);
+    if (isFirstLoad) {
+      buildPlayersFromSleeperList(cached.players);
+    } else {
+      applyPlayerMetadata(cached.players);
+      reapplySleeperRanks();
+    }
     updateDataFreshness(new Date(cached.timestamp));
     renderAll();
     return;
@@ -1660,6 +1668,7 @@ async function checkAndRefreshPlayers() {
     } else {
       applyPlayerMetadata(players);
       addNewSleeperPlayers(players);
+      reapplySleeperRanks();
     }
 
     updateDataFreshness(new Date());
@@ -1738,6 +1747,8 @@ function buildPlayersFromSleeperList(sleeperPlayers) {
     team:         sp.team,
     position:     sp.position,
     rank:         i + 1,
+    sleeperRank:  sp.sleeperRank,
+    rankLocked:   false,
     tags:         [],
     isDrafted:    false,
     draftPick:    null,
@@ -1758,8 +1769,23 @@ function applyPlayerMetadata(sleeperPlayers) {
     player.team         = sp.team;
     player.injuryStatus = sp.injuryStatus;
     player.byeWeek      = sp.byeWeek;
+    player.sleeperRank  = sp.sleeperRank;
     if (!player.sleeperId) player.sleeperId = sp.sleeperId;
   });
+}
+
+/**
+ * Re-sort players using Sleeper's search_rank, but preserve manually locked positions.
+ * Locked players sort by their pinned rank; unlocked players sort by sleeperRank.
+ * All ranks are then reassigned sequentially 1..N.
+ */
+function reapplySleeperRanks() {
+  state.players.sort((a, b) => {
+    const ra = a.rankLocked ? a.rank : (a.sleeperRank || 9999);
+    const rb = b.rankLocked ? b.rank : (b.sleeperRank || 9999);
+    return ra - rb;
+  });
+  state.players.forEach((p, i) => { p.rank = i + 1; });
 }
 
 /** Add Sleeper players that don't exist in our board yet (trades, rookies, etc.) */
@@ -1779,6 +1805,8 @@ function addNewSleeperPlayers(sleeperPlayers) {
         team:         sp.team,
         position:     sp.position,
         rank:         ++maxRank,
+        sleeperRank:  sp.sleeperRank,
+        rankLocked:   false,
         tags:         [],
         isDrafted:    false,
         draftPick:    null,
