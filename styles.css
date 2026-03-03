@@ -426,7 +426,7 @@ body {
 /* Column widths */
 .col-drag        { width: 32px;  min-width: 32px; }
 .col-rank        { width: 58px;  min-width: 58px; }
-.col-player      { width: 260px; min-width: 160px; }
+.col-player      { width: 280px; min-width: 160px; }
 .col-tags        { width: 180px; min-width: 180px; text-align: center; }
 .player-table th.col-tags { text-align: center; }
 .col-pos         { width: 68px;  min-width: 68px; }

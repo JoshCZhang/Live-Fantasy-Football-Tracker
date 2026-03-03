@@ -517,6 +517,7 @@ function buildRow(player) {
       </div>
     </td>
     <td class="col-tags"><div class="tag-cell-icons">${tagIcons}</div></td>
+    <td class="col-spacer"></td>
     <td class="col-pos">
       <span class="pos-badge" style="background:${posColor}">${player.position}</span>
     </td>
@@ -527,7 +528,6 @@ function buildRow(player) {
       </button>
     </td>
     <td class="col-pick">${pickInfo}</td>
-    <td class="col-spacer"></td>
   </tr>`;
 }
 
