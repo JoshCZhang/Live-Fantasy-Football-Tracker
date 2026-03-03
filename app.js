@@ -12,13 +12,15 @@
 
 const TAGS_CONFIG = {
   'My Man':       { color: '#f59e0b', bg: 'rgba(245,158,11,.15)', icon: '⭐', short: 'MM' },
-  'Breakout':     { color: '#10b981', bg: 'rgba(16,185,129,.15)', icon: '🚀', short: 'BK' },
   'Bust':         { color: '#ef4444', bg: 'rgba(239,68,68,.15)',  icon: '💣', short: 'BS' },
+  'Breakout':     { color: '#10b981', bg: 'rgba(16,185,129,.15)', icon: '🚀', short: 'BK' },
   'Sleeper':      { color: '#8b5cf6', bg: 'rgba(139,92,246,.15)', icon: '😴', short: 'SLP' },
   'Value':        { color: '#3b82f6', bg: 'rgba(59,130,246,.15)', icon: '💎', short: 'VAL' },
   'Injury Prone': { color: '#f97316', bg: 'rgba(249,115,22,.15)', icon: '🩹', short: 'INJ' },
   'Rookie':       { color: '#06b6d4', bg: 'rgba(6,182,212,.15)',  icon: '🎓', short: 'RK' },
+  'Do Not Draft': { color: '#dc2626', bg: 'rgba(220,38,38,.15)', icon: '🛑', short: 'DND' },
 };
+const TAG_ORDER = Object.keys(TAGS_CONFIG);
 
 const POS_COLORS = {
   QB:  '#c84b47',
@@ -462,18 +464,6 @@ function renderPlayers() {
   }
 }
 
-function tagTd(player, tagName, colClass) {
-  const cfg    = TAGS_CONFIG[tagName];
-  const active = player.tags.includes(tagName);
-  const shadow = active ? `filter:drop-shadow(0 0 4px ${cfg.color})` : '';
-  return `<td class="${colClass}">` +
-    `<button class="tag-col-btn${active ? ' active' : ''}" ` +
-    `onclick="toggleTag(${player.id}, '${tagName}')" ` +
-    `title="${tagName}" ` +
-    `${active ? `style="${shadow}"` : ''}>` +
-    `${active ? cfg.icon : '·'}` +
-    `</button></td>`;
-}
 
 function buildRow(player) {
   const posColor  = POS_COLORS[player.position] || '#6b7280';
@@ -493,6 +483,14 @@ function buildRow(player) {
 
   const draftedLabel = player.isDrafted ? '✓ Drafted' : 'Mark Drafted';
 
+  const tagIcons = player.tags
+    .filter(t => TAGS_CONFIG[t])
+    .sort((a, b) => TAG_ORDER.indexOf(a) - TAG_ORDER.indexOf(b))
+    .map(t => {
+      const cfg = TAGS_CONFIG[t];
+      return `<span class="tag-cell-icon" title="${t}" style="filter:drop-shadow(0 0 3px ${cfg.color})">${cfg.icon}</span>`;
+    }).join('');
+
   return `<tr class="player-row ${player.isDrafted ? 'drafted' : ''} ${isMyMan ? 'my-man' : ''}"
              data-id="${player.id}" data-rank="${player.rank}" draggable="true">
     <td class="col-drag">
@@ -509,24 +507,20 @@ function buildRow(player) {
     <td class="col-player">
       <div class="player-info">
         <div class="player-avatar" style="background:${teamColor};color:#fff;font-size:10px;letter-spacing:-.3px">${esc(avatarText)}</div>
-        <div class="player-name-info" onclick="openTagEditor(${player.id})" title="Click to edit tags">
+        <div class="player-name-info">
           <span class="player-name">${esc(player.name)}</span>
           <span class="player-meta">
             <span class="player-team">${esc(player.team)} · BYE ${player.byeWeek ?? 'TBD'}</span>${buildInjuryBadge(player.injuryStatus)}
           </span>
         </div>
+        <button class="add-tags-btn" onclick="openTagEditor(${player.id})" title="Edit tags">+ Tags</button>
       </div>
     </td>
+    <td class="col-tags"><div class="tag-cell-icons">${tagIcons}</div></td>
+    <td class="col-spacer"></td>
     <td class="col-pos">
       <span class="pos-badge" style="background:${posColor}">${player.position}</span>
     </td>
-    ${tagTd(player, 'My Man',       'col-myman')}
-    ${tagTd(player, 'Breakout',     'col-breakout')}
-    ${tagTd(player, 'Bust',         'col-bust')}
-    ${tagTd(player, 'Sleeper',      'col-sleep')}
-    ${tagTd(player, 'Value',        'col-value')}
-    ${tagTd(player, 'Injury Prone', 'col-injuryprone')}
-    ${tagTd(player, 'Rookie',       'col-rookie')}
     <td class="col-drafted">
       <button class="drafted-btn ${player.isDrafted ? 'is-drafted' : ''}"
               onclick="toggleDrafted(${player.id})">
@@ -632,21 +626,6 @@ function toggleDrafted(playerId) {
   renderAll();
 }
 
-function toggleTag(playerId, tagName) {
-  const p = findPlayer(playerId);
-  if (!p) return;
-
-  const idx = p.tags.indexOf(tagName);
-  if (idx === -1) {
-    p.tags.push(tagName);
-  } else {
-    p.tags.splice(idx, 1);
-  }
-
-  saveState();
-  renderPlayers();
-  renderStats();
-}
 
 /* ============================================================
    SECTION 8 — TAG EDITOR MODAL
@@ -1477,30 +1456,6 @@ function initEventListeners() {
     renderStats();
   });
 
-  // Columns dropdown
-  const tagsBtn  = document.getElementById('tagsDropdownBtn');
-  const tagsMenu = document.getElementById('tagsDropdownMenu');
-  tagsBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    tagsBtn.classList.toggle('open');
-    tagsMenu.classList.toggle('open');
-  });
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('#tagsFilterWrap')) {
-      tagsBtn.classList.remove('open');
-      tagsMenu.classList.remove('open');
-    }
-  });
-
-  // Column visibility toggles
-  document.querySelectorAll('.col-toggle-item').forEach(item => {
-    item.addEventListener('click', () => {
-      const col = item.dataset.col;
-      const table = document.getElementById('playerTable');
-      const isActive = item.classList.toggle('active');
-      table.classList.toggle(`show-${col}`, isActive);
-    });
-  });
 
   // Connect button
   document.getElementById('connectBtn').addEventListener('click', () => {
