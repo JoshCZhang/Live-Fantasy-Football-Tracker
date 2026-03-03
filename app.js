@@ -527,6 +527,7 @@ function buildRow(player) {
       </button>
     </td>
     <td class="col-pick">${pickInfo}</td>
+    <td class="col-spacer"></td>
   </tr>`;
 }
 
