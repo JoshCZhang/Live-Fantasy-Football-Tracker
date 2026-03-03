@@ -1532,12 +1532,13 @@ function initEventListeners() {
 
   // Reset draft
   document.getElementById('resetDraftBtn').addEventListener('click', () => {
-    if (!confirm('Reset all draft picks? Tags and rankings are preserved.')) return;
+    if (!confirm('Reset all draft picks and tags? Rankings are preserved.')) return;
     state.players.forEach(p => {
       p.isDrafted = false;
       p.draftPick = null;
       p.draftedBy = null;
       p.rosterId  = null;
+      p.tags      = [];
     });
     state.connection.knownPickNos = new Set();
     state.connection.recentPicks  = [];
