@@ -1553,7 +1553,6 @@ function initEventListeners() {
 
   // League View
   document.getElementById('leagueViewBtn').addEventListener('click', toggleLeagueView);
-  document.getElementById('leagueViewBackBtn').addEventListener('click', closeLeagueView);
 
   // Import/Export
   document.getElementById('exportBtn').addEventListener('click', exportRankings);
@@ -1634,7 +1633,9 @@ function openLeagueView() {
   state.leagueViewActive = true;
   document.getElementById('mainView').style.display   = 'none';
   document.getElementById('leagueView').style.display = '';
-  document.getElementById('leagueViewBtn').classList.add('active');
+  const btn = document.getElementById('leagueViewBtn');
+  btn.classList.add('active');
+  btn.innerHTML = '🏟 Draft View';
   renderLeagueView();
 }
 
@@ -1642,7 +1643,9 @@ function closeLeagueView() {
   state.leagueViewActive = false;
   document.getElementById('mainView').style.display   = '';
   document.getElementById('leagueView').style.display = 'none';
-  document.getElementById('leagueViewBtn').classList.remove('active');
+  const btn = document.getElementById('leagueViewBtn');
+  btn.classList.remove('active');
+  btn.innerHTML = '🏟 League View';
 }
 
 function getNumTeams() {
@@ -1738,7 +1741,7 @@ function renderLeagueView() {
   if (subtitle) subtitle.textContent = `${numTeams} teams · ${drafted.length} picks`;
 
   const allHaveRoster = drafted.every(p => p.rosterId);
-  const note = !allHaveRoster
+  const note = (!allHaveRoster && state.connection.platform !== 'sleeper')
     ? `<div class="lv-note">⚠ Team assignments estimated via snake-draft math. Connect via Sleeper for exact team data.</div>`
     : '';
 
