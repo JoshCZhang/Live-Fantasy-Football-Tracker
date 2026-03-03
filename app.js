@@ -18,6 +18,7 @@ const TAGS_CONFIG = {
   'Value':        { color: '#3b82f6', bg: 'rgba(59,130,246,.15)', icon: '💎', short: 'VAL' },
   'Injury Prone': { color: '#f97316', bg: 'rgba(249,115,22,.15)', icon: '🩹', short: 'INJ' },
   'Rookie':       { color: '#06b6d4', bg: 'rgba(6,182,212,.15)',  icon: '🎓', short: 'RK' },
+  'Do Not Draft': { color: '#dc2626', bg: 'rgba(220,38,38,.15)', icon: '🛑', short: 'DND' },
 };
 
 const POS_COLORS = {
