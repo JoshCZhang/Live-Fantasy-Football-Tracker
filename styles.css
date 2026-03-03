@@ -431,7 +431,9 @@ body {
 .player-table td.col-tags { padding-left: 30px; }
 .player-table th.col-tags { padding-left: 30px; text-align: center; }
 .col-pos         { width: 68px;  min-width: 68px; }
-.col-adp         { width: 58px;  min-width: 58px; text-align: center; color: var(--text2); font-size: 12px; }
+.col-adp                    { width: 58px;  min-width: 58px; }
+.player-table th.col-adp   { text-align: center; }
+.player-table td.col-adp   { text-align: center; color: var(--text2); font-size: 12px; }
 .col-drafted     { width: 110px; min-width: 110px; }
 .col-pick        { width: 80px;  min-width: 80px; }
 .col-spacer      { width: auto;  min-width: 0; padding: 0; }
