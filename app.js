@@ -12,14 +12,15 @@
 
 const TAGS_CONFIG = {
   'My Man':       { color: '#f59e0b', bg: 'rgba(245,158,11,.15)', icon: '⭐', short: 'MM' },
-  'Breakout':     { color: '#10b981', bg: 'rgba(16,185,129,.15)', icon: '🚀', short: 'BK' },
   'Bust':         { color: '#ef4444', bg: 'rgba(239,68,68,.15)',  icon: '💣', short: 'BS' },
+  'Breakout':     { color: '#10b981', bg: 'rgba(16,185,129,.15)', icon: '🚀', short: 'BK' },
   'Sleeper':      { color: '#8b5cf6', bg: 'rgba(139,92,246,.15)', icon: '😴', short: 'SLP' },
   'Value':        { color: '#3b82f6', bg: 'rgba(59,130,246,.15)', icon: '💎', short: 'VAL' },
   'Injury Prone': { color: '#f97316', bg: 'rgba(249,115,22,.15)', icon: '🩹', short: 'INJ' },
   'Rookie':       { color: '#06b6d4', bg: 'rgba(6,182,212,.15)',  icon: '🎓', short: 'RK' },
   'Do Not Draft': { color: '#dc2626', bg: 'rgba(220,38,38,.15)', icon: '🛑', short: 'DND' },
 };
+const TAG_ORDER = Object.keys(TAGS_CONFIG);
 
 const POS_COLORS = {
   QB:  '#c84b47',
@@ -484,6 +485,7 @@ function buildRow(player) {
 
   const tagIcons = player.tags
     .filter(t => TAGS_CONFIG[t])
+    .sort((a, b) => TAG_ORDER.indexOf(a) - TAG_ORDER.indexOf(b))
     .map(t => {
       const cfg = TAGS_CONFIG[t];
       return `<span class="tag-cell-icon" title="${t}" style="filter:drop-shadow(0 0 3px ${cfg.color})">${cfg.icon}</span>`;

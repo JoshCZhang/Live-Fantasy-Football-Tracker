@@ -427,7 +427,7 @@ body {
 .col-drag        { width: 32px;  min-width: 32px; }
 .col-rank        { width: 58px;  min-width: 58px; }
 .col-player      { width: 220px; min-width: 160px; }
-.col-tags        { width: 200px; min-width: 200px; text-align: center; }
+.col-tags        { width: 150px; min-width: 150px; text-align: center; }
 .player-table th.col-tags { text-align: center; }
 .col-pos         { width: 68px;  min-width: 68px; }
 .col-drafted     { width: 110px; min-width: 110px; }
@@ -524,7 +524,7 @@ body {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  flex: 1;
+  flex: 0 1 130px;
 }
 .player-name {
   font-size: 14px;
@@ -556,7 +556,7 @@ body {
 .tag-cell-icons {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: nowrap;
   gap: 4px;
 }
