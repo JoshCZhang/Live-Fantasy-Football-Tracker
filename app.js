@@ -24,8 +24,8 @@ const POS_COLORS = {
   QB:  '#c84b47',
   RB:  '#2d7a54',
   WR:  '#2563eb',
-  TE:  '#7c3aed',
-  K:   '#6b7280',
+  TE:  '#d97706',
+  K:   '#7c3aed',
   DST: '#0d9488',
 };
 
@@ -1692,7 +1692,7 @@ function assignPlayersToSlots(players, rosterSlots) {
     const color = def.pos.length === 1 ? (POS_COLORS[def.pos[0]] || '#6b7280') : '#6b7280';
     for (let i = 0; i < def.count; i++) {
       const suffix = def.count > 1 ? (i + 1) : '';
-      slots.push({ label: def.label + suffix, posColor: color, pos: def.pos, isFlex: def.pos.length > 1, player: null });
+      slots.push({ label: def.label + suffix, posColor: color, pos: def.pos, isFlex: def.pos.length > 1, slotId: def.id, player: null });
     }
   });
 
@@ -1800,17 +1800,23 @@ function buildTeamCard(teamSlot, players, rosterSlots, hasSlots, teamName, isMyT
   // Build roster rows
   const rosterRows = slots.map(slot => {
     if (slot.player) {
-      const p     = slot.player;
-      const color = POS_COLORS[p.position] || '#6b7280';
-      const inj   = p.injuryStatus ? buildInjuryBadge(p.injuryStatus) : '';
+      const p          = slot.player;
+      const isTrueFlex = slot.isFlex && slot.slotId !== 'BN';
+      const color      = isTrueFlex ? '#ffffff' : (POS_COLORS[p.position] || '#6b7280');
+      const labelStyle = isTrueFlex ? 'background:#ffffff;color:#1f2937' : `background:${color}`;
+      const inj        = p.injuryStatus ? buildInjuryBadge(p.injuryStatus) : '';
       return `<div class="lv-slot lv-slot--filled">
-        <span class="lv-slot-label" style="background:${color}">${slot.label}</span>
+        <span class="lv-slot-label" style="${labelStyle}">${slot.label}</span>
         <span class="lv-slot-name">${esc(p.name)}${inj}</span>
         <span class="lv-slot-nfl">${esc(p.team)}</span>
       </div>`;
     } else {
+      const isTrueFlex  = slot.isFlex && slot.slotId !== 'BN';
+      const emptyStyle  = isTrueFlex
+        ? 'background:rgba(255,255,255,0.08);color:#ffffff;border:1px solid rgba(255,255,255,0.25)'
+        : `background:${slot.posColor}22;color:${slot.posColor};border:1px solid ${slot.posColor}44`;
       return `<div class="lv-slot lv-slot--empty">
-        <span class="lv-slot-label lv-slot-label--empty" style="background:${slot.posColor}22;color:${slot.posColor};border:1px solid ${slot.posColor}44">${slot.label}</span>
+        <span class="lv-slot-label lv-slot-label--empty" style="${emptyStyle}">${slot.label}</span>
         <span class="lv-slot-placeholder">—</span>
       </div>`;
     }
