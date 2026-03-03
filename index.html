@@ -93,6 +93,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z"/><path d="M8 2v16"/><path d="M16 6v16"/></svg>
         Connect to Draft
       </button>
+      <button class="btn btn-ghost" id="leagueViewBtn" style="display:none" title="View all team rosters">🏟 League View</button>
       <div class="last-updated" id="lastUpdated"></div>
     </div>
     <div class="connection-right">
@@ -111,8 +112,18 @@
     </div>
   </div>
 
+  <!-- ===== LEAGUE VIEW ===== -->
+  <div id="leagueView" class="league-view" style="display:none">
+    <div class="lv-header">
+      <button class="btn btn-ghost btn-sm" id="leagueViewBackBtn">← Draft Board</button>
+      <h2 class="lv-title">🏟 League View</h2>
+      <span class="lv-subtitle" id="lvSubtitle"></span>
+    </div>
+    <div class="lv-body" id="leagueViewContent"></div>
+  </div>
+
   <!-- ===== MAIN TABLE ===== -->
-  <main class="main-content">
+  <main class="main-content" id="mainView">
     <div class="table-container">
       <table class="player-table" id="playerTable">
         <thead>
@@ -185,6 +196,8 @@
         <p class="cfg-desc">Paste your Sleeper draft URL or enter the draft ID directly.</p>
         <label class="input-label">Draft URL or ID</label>
         <input type="text" id="sleeperInput" class="cfg-input" placeholder="https://sleeper.com/draft/nfl/123456789  or  123456789">
+        <label class="input-label">Your Sleeper Username <span style="font-weight:400;color:var(--text3)">(optional — highlights your team in League View)</span></label>
+        <input type="text" id="sleeperUsernameInput" class="cfg-input" placeholder="e.g. your_username">
         <p class="cfg-note cfg-success">✓ Real-time WebSocket updates supported. Polls every 10 seconds as backup.</p>
       </div>
 

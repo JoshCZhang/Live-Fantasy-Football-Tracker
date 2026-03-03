@@ -1111,3 +1111,270 @@ code {
   max-width: 240px;
   line-height: 1.5;
 }
+
+/* ============================================================
+   LEAGUE VIEW
+   ============================================================ */
+.league-view {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.lv-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 20px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.lv-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.lv-subtitle {
+  font-size: 12px;
+  color: var(--text3);
+  flex: 1;
+}
+
+.lv-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+  padding: 16px 20px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.lv-note {
+  background: rgba(245,158,11,.08);
+  border: 1px solid rgba(245,158,11,.2);
+  color: #fbbf24;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  padding: 8px 12px;
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+/* Team card grid */
+.league-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+/* Individual team card */
+.lv-team-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* My team — gold accent border */
+.lv-team-card.lv-my-team {
+  border-color: rgba(245,158,11,.5);
+  box-shadow: 0 0 0 1px rgba(245,158,11,.15);
+}
+
+/* Card header */
+.lv-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 11px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border2);
+  gap: 8px;
+  flex-shrink: 0;
+  min-width: 0;
+}
+.lv-team-card.lv-my-team .lv-card-header {
+  background: rgba(245,158,11,.07);
+}
+
+.lv-card-title {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.lv-my-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: #f59e0b;
+  letter-spacing: .3px;
+}
+
+.lv-card-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.lv-card-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.lv-picks-left {
+  font-size: 10px;
+  color: var(--text3);
+  white-space: nowrap;
+}
+
+.lv-mark-btn {
+  font-size: 9px;
+  font-weight: 600;
+  background: none;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--text3);
+  cursor: pointer;
+  padding: 2px 5px;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.lv-mark-btn:hover {
+  border-color: #f59e0b55;
+  color: #f59e0b;
+}
+
+/* Roster rows */
+.lv-roster {
+  flex: 1;
+  padding: 4px 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.lv-slot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 2px;
+  border-bottom: 1px solid var(--border2);
+  min-width: 0;
+}
+.lv-slot:last-child { border-bottom: none; }
+
+/* Slot label — filled vs empty */
+.lv-slot-label {
+  font-size: 9px;
+  font-weight: 800;
+  color: #fff;
+  border-radius: 3px;
+  padding: 2px 4px;
+  min-width: 34px;
+  text-align: center;
+  flex-shrink: 0;
+  letter-spacing: .3px;
+}
+
+.lv-slot-label--empty {
+  color: inherit;
+  background: transparent !important;
+}
+
+/* Filled slot */
+.lv-slot-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.lv-slot-nfl {
+  font-size: 10px;
+  color: var(--text3);
+  flex-shrink: 0;
+}
+
+/* Empty slot */
+.lv-slot--empty .lv-slot-placeholder {
+  font-size: 11px;
+  color: var(--text3);
+  opacity: .4;
+  flex: 1;
+}
+
+.lv-no-picks {
+  font-size: 12px;
+  color: var(--text3);
+  padding: 12px 0;
+  text-align: center;
+  opacity: .6;
+}
+
+/* Needs badges row */
+.lv-needs-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-top: 1px solid var(--border2);
+  background: rgba(0,0,0,.12);
+  flex-shrink: 0;
+}
+
+.lv-needs-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--text3);
+  flex-shrink: 0;
+}
+
+.lv-need-badge {
+  font-size: 10px;
+  font-weight: 700;
+  border: 1px solid;
+  border-radius: 3px;
+  padding: 1px 5px;
+  white-space: nowrap;
+}
+
+/* Empty state */
+.lv-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  text-align: center;
+  gap: 10px;
+}
+.lv-empty-icon { font-size: 48px; opacity: .5; }
+.lv-empty-state p { font-size: 14px; color: var(--text2); }
+
+/* League View button — active state */
+#leagueViewBtn.active {
+  background: rgba(37,99,235,.15);
+  border-color: rgba(37,99,235,.4);
+  color: var(--wr);
+}
