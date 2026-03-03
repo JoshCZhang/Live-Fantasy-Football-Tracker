@@ -521,6 +521,7 @@ function buildRow(player) {
     <td class="col-pos">
       <span class="pos-badge" style="background:${posColor}">${player.position}</span>
     </td>
+    <td class="col-adp">${player.sleeperRank ?? '—'}</td>
     <td class="col-drafted">
       <button class="drafted-btn ${player.isDrafted ? 'is-drafted' : ''}"
               onclick="toggleDrafted(${player.id})">
