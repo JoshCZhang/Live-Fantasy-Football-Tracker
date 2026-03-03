@@ -258,6 +258,15 @@ let state = {
     overIndex: null,
   },
   nextId: 146,
+  // League View
+  league: {
+    teams:       0,          // number of fantasy teams
+    rounds:      0,          // total rounds in draft
+    rosterSlots: {},         // { QB:1, RB:2, WR:2, TE:1, FLEX:1, K:1, DST:1, BN:6, SFLX:0 }
+    teamNames:   {},         // { rosterId: 'Team Name' }
+    myRosterId:  null,       // which roster slot belongs to the user
+  },
+  leagueViewActive: false,
 };
 
 /* ============================================================
@@ -428,7 +437,11 @@ function getDisplayPlayers() {
    ============================================================ */
 
 function renderAll() {
-  renderPlayers();
+  if (state.leagueViewActive) {
+    renderLeagueView();
+  } else {
+    renderPlayers();
+  }
   renderConnectionStatus();
   renderTicker();
   renderStats();
@@ -534,13 +547,18 @@ function renderConnectionStatus() {
   dot.className  = 'status-dot ' + status;
   text.textContent = statusMsg;
 
-  if (status === 'connected' || status === 'polling') {
+  const isConnected = status === 'connected' || status === 'polling';
+  if (isConnected) {
     btn.textContent = '✕ Disconnect';
     btn.classList.add('disconnect');
   } else {
     btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z"/><path d="M8 2v16"/><path d="M16 6v16"/></svg> Connect to Draft`;
     btn.classList.remove('disconnect');
   }
+
+  // Show/hide League View button
+  const lvBtn = document.getElementById('leagueViewBtn');
+  if (lvBtn) lvBtn.style.display = isConnected ? '' : 'none';
 
   if (lastUpdated) {
     const d = new Date(lastUpdated);
@@ -599,6 +617,7 @@ function toggleDrafted(playerId) {
     p.isDrafted = false;
     p.draftPick = null;
     p.draftedBy = null;
+    p.rosterId  = null;
     showToast(`${p.name} unmarked as drafted`, 'info');
   } else {
     p.isDrafted = true;
@@ -824,7 +843,7 @@ function applyRankEdit(playerId, newRank) {
 
 const SLEEPER_BASE = 'https://api.sleeper.app/v1';
 
-async function connectSleeper(input) {
+async function connectSleeper(input, username) {
   const raw = input.trim();
   // Extract ID from URL like https://sleeper.com/draft/nfl/1234567890
   const match = raw.match(/(\d{15,})/);
@@ -843,6 +862,28 @@ async function connectSleeper(input) {
 
     state.connection.platform  = 'sleeper';
     state.connection.draftId   = draftId;
+
+    // Store draft/roster settings for League View
+    if (info.settings) {
+      state.league.teams  = info.settings.teams  || 12;
+      state.league.rounds = info.settings.rounds || 15;
+      state.league.rosterSlots = {
+        QB:   info.settings.slots_qb         || 1,
+        RB:   info.settings.slots_rb         || 2,
+        WR:   info.settings.slots_wr         || 2,
+        TE:   info.settings.slots_te         || 1,
+        FLEX: info.settings.slots_flex       || 1,
+        SFLX: info.settings.slots_super_flex || 0,
+        K:    info.settings.slots_k          || 1,
+        DST:  info.settings.slots_def        || 1,
+        BN:   info.settings.slots_bn         || 6,
+      };
+    }
+
+    // Fetch real team names + identify user's team (non-blocking)
+    if (info.league_id) {
+      fetchSleeperLeagueInfo(info.league_id, username ? username.trim() : '').catch(() => {});
+    }
 
     // Initial pick fetch
     await pollSleeperPicks(draftId);
@@ -905,6 +946,7 @@ function processSleeperPick(pick) {
   if (player) {
     player.isDrafted = true;
     player.draftPick = pick.pick_no;
+    player.rosterId  = pick.roster_id || null;
     player.draftedBy = meta.owner_id
       ? (meta.owner_id.toString().substring(0, 10))
       : null;
@@ -1201,6 +1243,10 @@ function disconnect() {
   state.connection.status        = 'disconnected';
   state.connection.statusMsg     = 'Not Connected';
   state.connection.lastUpdated   = null;
+  // Reset league info
+  state.league = { teams: 0, rounds: 0, rosterSlots: {}, teamNames: {}, myRosterId: null };
+  // Close league view if open
+  if (state.leagueViewActive) closeLeagueView();
   renderConnectionStatus();
   showToast('Disconnected from draft', 'info');
 }
@@ -1481,7 +1527,10 @@ function initEventListeners() {
   document.getElementById('startConnectionBtn').addEventListener('click', () => {
     const activePlatform = document.querySelector('.platform-tab.active')?.dataset.platform;
     if (activePlatform === 'sleeper') {
-      connectSleeper(document.getElementById('sleeperInput').value);
+      connectSleeper(
+        document.getElementById('sleeperInput').value,
+        document.getElementById('sleeperUsernameInput').value
+      );
     } else if (activePlatform === 'espn') {
       connectESPN(
         document.getElementById('espnLeagueInput').value,
@@ -1501,6 +1550,9 @@ function initEventListeners() {
       connectManual();
     }
   });
+
+  // League View
+  document.getElementById('leagueViewBtn').addEventListener('click', toggleLeagueView);
 
   // Import/Export
   document.getElementById('exportBtn').addEventListener('click', exportRankings);
@@ -1530,6 +1582,7 @@ function initEventListeners() {
       p.isDrafted = false;
       p.draftPick = null;
       p.draftedBy = null;
+      p.rosterId  = null;
     });
     state.connection.knownPickNos = new Set();
     state.connection.recentPicks  = [];
@@ -1566,6 +1619,275 @@ function initEventListeners() {
       document.querySelectorAll('.modal-overlay.open').forEach(m => closeModal(m.id));
     }
   });
+}
+
+/* ============================================================
+   SECTION 19b — LEAGUE VIEW
+   ============================================================ */
+
+function toggleLeagueView() {
+  state.leagueViewActive ? closeLeagueView() : openLeagueView();
+}
+
+function openLeagueView() {
+  state.leagueViewActive = true;
+  document.getElementById('mainView').style.display   = 'none';
+  document.getElementById('leagueView').style.display = '';
+  const btn = document.getElementById('leagueViewBtn');
+  btn.classList.add('active');
+  btn.innerHTML = '🏟 Draft View';
+  renderLeagueView();
+}
+
+function closeLeagueView() {
+  state.leagueViewActive = false;
+  document.getElementById('mainView').style.display   = '';
+  document.getElementById('leagueView').style.display = 'none';
+  const btn = document.getElementById('leagueViewBtn');
+  btn.classList.remove('active');
+  btn.innerHTML = '🏟 League View';
+}
+
+function getNumTeams() {
+  if (state.league.teams > 0) return state.league.teams;
+  const maxRId = Math.max(0, ...state.players.filter(p => p.rosterId).map(p => p.rosterId));
+  return maxRId > 0 ? maxRId : 12;
+}
+
+/** Snake-draft math: which team made overall pick N in a league of T teams? */
+function inferTeamSlot(pickNo, numTeams) {
+  if (!pickNo || !numTeams) return null;
+  const round      = Math.ceil(pickNo / numTeams);
+  const posInRound = ((pickNo - 1) % numTeams) + 1;
+  return round % 2 === 1 ? posInRound : (numTeams + 1 - posInRound);
+}
+
+/**
+ * Assign players to ordered roster slots via two-phase greedy:
+ * Phase 1 fills position-specific slots, Phase 2 fills FLEX/BN.
+ * Returns array of { label, posColor, player|null }.
+ */
+function assignPlayersToSlots(players, rosterSlots) {
+  const defs = [
+    { id: 'QB',   label: 'QB',   pos: ['QB'],                         count: rosterSlots.QB   || 0 },
+    { id: 'RB',   label: 'RB',   pos: ['RB'],                         count: rosterSlots.RB   || 0 },
+    { id: 'WR',   label: 'WR',   pos: ['WR'],                         count: rosterSlots.WR   || 0 },
+    { id: 'TE',   label: 'TE',   pos: ['TE'],                         count: rosterSlots.TE   || 0 },
+    { id: 'FLEX', label: 'FLX',  pos: ['RB','WR','TE'],               count: rosterSlots.FLEX || 0 },
+    { id: 'SFLX', label: 'SF',   pos: ['QB','RB','WR','TE'],          count: rosterSlots.SFLX || 0 },
+    { id: 'K',    label: 'K',    pos: ['K'],                          count: rosterSlots.K    || 0 },
+    { id: 'DST',  label: 'DST',  pos: ['DST'],                        count: rosterSlots.DST  || 0 },
+    { id: 'BN',   label: 'BN',   pos: ['QB','RB','WR','TE','K','DST'],count: rosterSlots.BN   || 0 },
+  ];
+
+  const totalSlots = defs.reduce((s, d) => s + d.count, 0);
+  if (totalSlots === 0) {
+    // No roster config — just list players by position
+    return players.map(p => ({ label: p.position, posColor: POS_COLORS[p.position], player: p, isFlex: false }));
+  }
+
+  // Build expanded slot list
+  const slots = [];
+  defs.forEach(def => {
+    const color = def.pos.length === 1 ? (POS_COLORS[def.pos[0]] || '#6b7280') : '#6b7280';
+    for (let i = 0; i < def.count; i++) {
+      const suffix = def.count > 1 ? (i + 1) : '';
+      slots.push({ label: def.label + suffix, posColor: color, pos: def.pos, isFlex: def.pos.length > 1, player: null });
+    }
+  });
+
+  const remaining = [...players];
+
+  // Phase 1: specific-position slots
+  slots.forEach(slot => {
+    if (slot.player || slot.isFlex) return;
+    const idx = remaining.findIndex(p => slot.pos.includes(p.position));
+    if (idx !== -1) slot.player = remaining.splice(idx, 1)[0];
+  });
+
+  // Phase 2: flex / BN slots
+  slots.forEach(slot => {
+    if (slot.player || !slot.isFlex) return;
+    const idx = remaining.findIndex(p => slot.pos.includes(p.position));
+    if (idx !== -1) slot.player = remaining.splice(idx, 1)[0];
+  });
+
+  // Overflow (more picks than roster spots)
+  remaining.forEach(p => {
+    slots.push({ label: 'BN', posColor: '#4b5563', pos: [], isFlex: true, player: p });
+  });
+
+  return slots;
+}
+
+function renderLeagueView() {
+  const container = document.getElementById('leagueViewContent');
+  const subtitle  = document.getElementById('lvSubtitle');
+  if (!container) return;
+
+  const numTeams = getNumTeams();
+  const drafted  = state.players.filter(p => p.isDrafted);
+
+  if (drafted.length === 0) {
+    if (subtitle) subtitle.textContent = '';
+    container.innerHTML = `
+      <div class="lv-empty-state">
+        <div class="lv-empty-icon">🏟</div>
+        <p>No picks yet — rosters will fill in as players are drafted.</p>
+      </div>`;
+    return;
+  }
+
+  if (subtitle) subtitle.textContent = `${numTeams} teams · ${drafted.length} picks`;
+
+  const allHaveRoster = drafted.every(p => p.rosterId);
+  const note = (!allHaveRoster && state.connection.platform !== 'sleeper')
+    ? `<div class="lv-note">⚠ Team assignments estimated via snake-draft math. Connect via Sleeper for exact team data.</div>`
+    : '';
+
+  // Group players by roster slot
+  const teamRosters = {};
+  for (let t = 1; t <= numTeams; t++) teamRosters[t] = [];
+  drafted.forEach(p => {
+    const slot = p.rosterId || inferTeamSlot(p.draftPick, numTeams);
+    if (!slot) return;
+    if (!teamRosters[slot]) teamRosters[slot] = [];
+    teamRosters[slot].push(p);
+  });
+
+  // Sort within each team: by pick number (preserve draft order for slot assignment)
+  Object.values(teamRosters).forEach(players =>
+    players.sort((a, b) => (a.draftPick || 0) - (b.draftPick || 0))
+  );
+
+  const rosterSlots = state.league.rosterSlots;
+  const hasSlots    = Object.keys(rosterSlots).length > 0;
+
+  const cards = [];
+  for (let t = 1; t <= numTeams; t++) {
+    const isMe     = state.league.myRosterId === t;
+    const teamName = state.league.teamNames[t] || `Team ${t}`;
+    cards.push(buildTeamCard(t, teamRosters[t] || [], rosterSlots, hasSlots, teamName, isMe));
+  }
+
+  container.innerHTML = `${note}<div class="league-grid">${cards.join('')}</div>`;
+}
+
+function buildTeamCard(teamSlot, players, rosterSlots, hasSlots, teamName, isMyTeam) {
+  const slots = assignPlayersToSlots(players, rosterSlots);
+
+  // Remaining needs — compare slot requirements vs what's filled
+  const posCounts  = {};
+  players.forEach(p => { posCounts[p.position] = (posCounts[p.position] || 0) + 1; });
+
+  const remaining = [];
+  if (hasSlots) {
+    ['QB','RB','WR','TE','K','DST'].forEach(pos => {
+      const need = (rosterSlots[pos] || 0) - (posCounts[pos] || 0);
+      if (need > 0) remaining.push({ pos, count: need });
+    });
+    const flexNeed = rosterSlots.FLEX || 0;
+    if (flexNeed > 0) {
+      const surplus = ['RB','WR','TE'].reduce((s, pos) =>
+        s + Math.max(0, (posCounts[pos] || 0) - (rosterSlots[pos] || 0)), 0);
+      if (surplus < flexNeed) remaining.push({ pos: 'FLX', count: flexNeed - surplus });
+    }
+  }
+
+  // Picks remaining
+  const picksLeft = state.league.rounds > 0 ? state.league.rounds - players.length : null;
+
+  // Build roster rows
+  const rosterRows = slots.map(slot => {
+    if (slot.player) {
+      const p     = slot.player;
+      const color = POS_COLORS[p.position] || '#6b7280';
+      const inj   = p.injuryStatus ? buildInjuryBadge(p.injuryStatus) : '';
+      return `<div class="lv-slot lv-slot--filled">
+        <span class="lv-slot-label" style="background:${color}">${slot.label}</span>
+        <span class="lv-slot-name">${esc(p.name)}${inj}</span>
+        <span class="lv-slot-nfl">${esc(p.team)}</span>
+      </div>`;
+    } else {
+      return `<div class="lv-slot lv-slot--empty">
+        <span class="lv-slot-label lv-slot-label--empty" style="background:${slot.posColor}22;color:${slot.posColor};border:1px solid ${slot.posColor}44">${slot.label}</span>
+        <span class="lv-slot-placeholder">—</span>
+      </div>`;
+    }
+  }).join('');
+
+  const needsBadges = remaining.map(({ pos, count }) => {
+    const color = POS_COLORS[pos] || '#6b7280';
+    return `<span class="lv-need-badge" style="border-color:${color}55;color:${color}">${count} ${pos}</span>`;
+  }).join('');
+
+  const myBadge  = isMyTeam ? '<span class="lv-my-badge">👑 My Team</span>' : '';
+  const markBtn  = !isMyTeam
+    ? `<button class="lv-mark-btn" onclick="markMyTeam(${teamSlot})" title="Mark as my team">Mark as Mine</button>`
+    : '';
+  const picksInfo = picksLeft !== null
+    ? `<span class="lv-picks-left">${picksLeft} picks left</span>`
+    : `<span class="lv-picks-left">${players.length} picks</span>`;
+
+  return `<div class="lv-team-card${isMyTeam ? ' lv-my-team' : ''}">
+    <div class="lv-card-header">
+      <div class="lv-card-title">
+        ${myBadge}
+        <span class="lv-card-name" title="${esc(teamName)}">${esc(teamName)}</span>
+      </div>
+      <div class="lv-card-right">
+        ${picksInfo}
+        ${markBtn}
+      </div>
+    </div>
+    <div class="lv-roster">${rosterRows || '<div class="lv-no-picks">No picks yet</div>'}</div>
+    ${needsBadges ? `<div class="lv-needs-row">
+      <span class="lv-needs-label">Needs:</span>${needsBadges}
+    </div>` : ''}
+  </div>`;
+}
+
+/** Fetch Sleeper league users + rosters → populate team names and identify user's team */
+async function fetchSleeperLeagueInfo(leagueId, username) {
+  const [users, rosters] = await Promise.all([
+    apiFetch(`${SLEEPER_BASE}/league/${leagueId}/users`),
+    apiFetch(`${SLEEPER_BASE}/league/${leagueId}/rosters`),
+  ]);
+  if (!users || !rosters) return;
+
+  // Build user_id → display name map
+  const userMap = {};
+  users.forEach(u => {
+    userMap[u.user_id] = u.metadata?.team_name || u.display_name || `User ${u.user_id}`;
+  });
+
+  // Map username → user_id for "my team" detection
+  let myUserId = null;
+  if (username) {
+    const me = users.find(u =>
+      u.username?.toLowerCase() === username.toLowerCase() ||
+      u.display_name?.toLowerCase() === username.toLowerCase()
+    );
+    if (me) myUserId = me.user_id;
+  }
+
+  // Assign team names and detect my roster
+  rosters.forEach(r => {
+    const ownerName = userMap[r.owner_id] || '';
+    state.league.teamNames[r.roster_id] = r.metadata?.team_name || ownerName || `Team ${r.roster_id}`;
+    if (myUserId && r.owner_id === myUserId) state.league.myRosterId = r.roster_id;
+  });
+
+  if (state.leagueViewActive) renderLeagueView();
+  if (myUserId && state.league.myRosterId) {
+    showToast(`Found your team: ${state.league.teamNames[state.league.myRosterId]}`, 'success');
+  }
+}
+
+/** Manual "mark as my team" — lets users on non-Sleeper platforms identify their roster */
+function markMyTeam(rosterId) {
+  state.league.myRosterId = state.league.myRosterId === rosterId ? null : rosterId;
+  if (state.leagueViewActive) renderLeagueView();
 }
 
 /* ============================================================
