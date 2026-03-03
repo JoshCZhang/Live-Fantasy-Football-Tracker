@@ -66,9 +66,9 @@ const CACHE_TTL_MS     = 12 * 60 * 60 * 1000; // 12 hours — refresh at 8 AM & 
 
 const INJURY_META = {
   Q:  { label: 'Q',   color: '#f59e0b', title: 'Questionable' },
-  D:  { label: 'D',   color: '#f97316', title: 'Doubtful' },
+  D:  { label: 'D',   color: '#ef4444', title: 'Doubtful' },
   O:  { label: 'OUT', color: '#ef4444', title: 'Out' },
-  IR: { label: 'IR',  color: '#6b7280', title: 'Injured Reserve' },
+  IR: { label: 'IR',  color: '#991b1b', title: 'Injured Reserve' },
   NA: { label: 'NA',  color: '#6b7280', title: 'Not Available' },
   PUP:{ label: 'PUP', color: '#6b7280', title: 'PUP List' },
 };
@@ -510,10 +510,10 @@ function buildRow(player) {
         <div class="player-name-info">
           <span class="player-name">${esc(player.name)}</span>
           <span class="player-meta">
-            <span class="player-team">${esc(player.team)} · BYE ${player.byeWeek ?? 'TBD'}</span>${buildInjuryBadge(player.injuryStatus)}
+            <span class="player-team">${esc(player.team)} · BYE ${player.byeWeek ?? 'TBD'}</span>
           </span>
         </div>
-        <button class="add-tags-btn" onclick="openTagEditor(${player.id})" title="Edit tags">+ Tags</button>
+        ${buildInjuryBadge(player.injuryStatus)}<button class="add-tags-btn" onclick="openTagEditor(${player.id})" title="Edit tags">+ Tags</button>
       </div>
     </td>
     <td class="col-tags"><div class="tag-cell-icons">${tagIcons}</div></td>
