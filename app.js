@@ -408,6 +408,7 @@ function initDefaultPlayers() {
     injuryStatus: null,
     byeWeek:      null,
     sleeperId:    null,
+    adp:          null,
   }));
 }
 
@@ -521,6 +522,7 @@ function buildRow(player) {
     <td class="col-pos">
       <span class="pos-badge" style="background:${posColor}">${player.position}</span>
     </td>
+    <td class="col-adp">${player.adp != null ? player.adp.toFixed(1) : '—'}</td>
     <td class="col-drafted">
       <button class="drafted-btn ${player.isDrafted ? 'is-drafted' : ''}"
               onclick="toggleDrafted(${player.id})">
@@ -1944,7 +1946,10 @@ async function checkAndRefreshPlayers() {
   }
 
   try {
-    const players = await fetchSleeperPlayerList();
+    const [players, adpMap] = await Promise.all([
+      fetchSleeperPlayerList(),
+      fetchSleeperAdp(),
+    ]);
     localStorage.setItem(PLAYER_CACHE_KEY, JSON.stringify({ timestamp: Date.now(), players }));
 
     if (isFirstLoad || state.players.length === 0) {
@@ -1954,6 +1959,7 @@ async function checkAndRefreshPlayers() {
       addNewSleeperPlayers(players);
       reapplySleeperRanks();
     }
+    applyAdpData(adpMap);
 
     updateDataFreshness(new Date());
     hideLoadingOverlay();
@@ -1977,6 +1983,37 @@ async function checkAndRefreshPlayers() {
 async function fetchSleeperPlayerList() {
   const raw = await apiFetch('https://api.sleeper.app/v1/players/nfl');
   return parseSleeperPlayerResponse(raw);
+}
+
+async function fetchSleeperAdp() {
+  // Use current year during preseason (Jun+), prior year during offseason
+  const now    = new Date();
+  const season = now.getMonth() >= 5 ? now.getFullYear() : now.getFullYear() - 1;
+  try {
+    const data = await apiFetch(
+      `https://api.sleeper.app/projections/nfl/${season}/1?season_type=regular` +
+      `&position[]=QB&position[]=RB&position[]=WR&position[]=TE&position[]=K&position[]=DEF`
+    );
+    const map = {};
+    const entries = Array.isArray(data) ? data : Object.values(data);
+    entries.forEach(entry => {
+      const pid = entry?.player_id;
+      const adp = entry?.stats?.adp_dd_ppr;
+      if (pid && adp != null) map[pid] = adp;
+    });
+    return map;
+  } catch(e) {
+    console.warn('Sleeper ADP fetch failed:', e);
+    return {};
+  }
+}
+
+function applyAdpData(adpMap) {
+  state.players.forEach(p => {
+    if (p.sleeperId && adpMap[p.sleeperId] != null) {
+      p.adp = adpMap[p.sleeperId];
+    }
+  });
 }
 
 function parseSleeperPlayerResponse(raw) {
@@ -2040,6 +2077,7 @@ function buildPlayersFromSleeperList(sleeperPlayers) {
     injuryStatus: sp.injuryStatus,
     byeWeek:      sp.byeWeek,
     sleeperId:    sp.sleeperId,
+    adp:          null,
   }));
   state.nextId = state.players.length + 1;
   saveState();
@@ -2097,6 +2135,7 @@ function addNewSleeperPlayers(sleeperPlayers) {
         draftedBy:    null,
         injuryStatus: sp.injuryStatus,
         sleeperId:    sp.sleeperId,
+        adp:          null,
       });
       added++;
     }
