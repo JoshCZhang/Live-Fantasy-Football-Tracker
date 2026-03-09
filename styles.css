@@ -1356,6 +1356,49 @@ code {
   white-space: nowrap;
 }
 
+/* Bye week chip on player rows */
+.lv-slot-bye {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text3);
+  border: 1px solid var(--border2);
+  border-radius: 3px;
+  padding: 1px 4px;
+  flex-shrink: 0;
+  letter-spacing: .2px;
+}
+.lv-slot-bye--conflict {
+  font-weight: 800;
+}
+
+/* Bye conflict summary row */
+.lv-bye-conflicts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-top: 1px solid var(--border2);
+  background: rgba(0,0,0,.12);
+  flex-shrink: 0;
+}
+.lv-bye-conflicts-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--text3);
+  flex-shrink: 0;
+}
+.lv-bye-conflict-chip {
+  font-size: 10px;
+  font-weight: 700;
+  border: 1px solid;
+  border-radius: 3px;
+  padding: 1px 5px;
+  white-space: nowrap;
+}
+
 /* Empty state */
 .lv-empty-state {
   display: flex;

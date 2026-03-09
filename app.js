@@ -1721,17 +1721,31 @@ function renderLeagueView() {
   const rosterSlots = state.league.rosterSlots;
   const hasSlots    = Object.keys(rosterSlots).length > 0;
 
+  // Compute bye week conflict colors for my team (weeks with 2+ players)
+  const byeColorMap = {};
+  if (state.league.myRosterId) {
+    const BYE_CONFLICT_COLORS = ['#d946ef','#06b6d4','#84cc16','#fb7185','#f97316','#818cf8','#eab308','#10b981'];
+    const myPlayers = teamRosters[state.league.myRosterId] || [];
+    const weekCounts = {};
+    myPlayers.forEach(p => { if (p.byeWeek) weekCounts[p.byeWeek] = (weekCounts[p.byeWeek] || 0) + 1; });
+    let colorIdx = 0;
+    Object.entries(weekCounts)
+      .filter(([, count]) => count >= 2)
+      .sort(([a], [b]) => Number(a) - Number(b))
+      .forEach(([week]) => { byeColorMap[week] = BYE_CONFLICT_COLORS[colorIdx++ % BYE_CONFLICT_COLORS.length]; });
+  }
+
   const cards = [];
   for (let t = 1; t <= numTeams; t++) {
     const isMe     = state.league.myRosterId === t;
     const teamName = state.league.teamNames[t] || `Team ${t}`;
-    cards.push(buildTeamCard(t, teamRosters[t] || [], rosterSlots, hasSlots, teamName, isMe));
+    cards.push(buildTeamCard(t, teamRosters[t] || [], rosterSlots, hasSlots, teamName, isMe, isMe ? byeColorMap : {}));
   }
 
   container.innerHTML = `${note}<div class="league-grid">${cards.join('')}</div>`;
 }
 
-function buildTeamCard(teamSlot, players, rosterSlots, hasSlots, teamName, isMyTeam) {
+function buildTeamCard(teamSlot, players, rosterSlots, hasSlots, teamName, isMyTeam, byeColorMap = {}) {
   const slots = assignPlayersToSlots(players, rosterSlots);
 
   // Remaining needs — compare slot requirements vs what's filled
@@ -1763,10 +1777,16 @@ function buildTeamCard(teamSlot, players, rosterSlots, hasSlots, teamName, isMyT
       const color      = isTrueFlex ? '#ffffff' : (POS_COLORS[p.position] || '#6b7280');
       const labelStyle = isTrueFlex ? 'background:#ffffff;color:#1f2937' : `background:${color}`;
       const inj        = p.injuryStatus ? buildInjuryBadge(p.injuryStatus) : '';
-      return `<div class="lv-slot lv-slot--filled">
+      const byeConflictColor = p.byeWeek ? byeColorMap[p.byeWeek] : null;
+      const rowStyle   = byeConflictColor ? ` style="background:${byeConflictColor}18;border-left:2px solid ${byeConflictColor}99;"` : '';
+      const byeChip    = p.byeWeek
+        ? `<span class="lv-slot-bye${byeConflictColor ? ' lv-slot-bye--conflict' : ''}"${byeConflictColor ? ` style="color:${byeConflictColor};border-color:${byeConflictColor}55;"` : ''}>BYE ${p.byeWeek}</span>`
+        : '';
+      return `<div class="lv-slot lv-slot--filled"${rowStyle}>
         <span class="lv-slot-label" style="${labelStyle}">${slot.label}</span>
         <span class="lv-slot-name">${esc(p.name)}${inj}</span>
         <span class="lv-slot-nfl">${esc(p.team)}</span>
+        ${byeChip}
       </div>`;
     } else {
       const isTrueFlex  = slot.isFlex && slot.slotId !== 'BN';
@@ -1793,6 +1813,17 @@ function buildTeamCard(teamSlot, players, rosterSlots, hasSlots, teamName, isMyT
     ? `<span class="lv-picks-left">${picksLeft} picks left</span>`
     : `<span class="lv-picks-left">${players.length} picks</span>`;
 
+  const byeConflictEntries = Object.entries(byeColorMap).sort(([a], [b]) => Number(a) - Number(b));
+  const byeConflictSummary = byeConflictEntries.length
+    ? `<div class="lv-bye-conflicts">
+        <span class="lv-bye-conflicts-label">Bye conflicts:</span>
+        ${byeConflictEntries.map(([week, color]) => {
+          const count = players.filter(p => p.byeWeek == week).length;
+          return `<span class="lv-bye-conflict-chip" style="color:${color};border-color:${color}55;background:${color}18;">Wk ${week} · ${count} players</span>`;
+        }).join('')}
+      </div>`
+    : '';
+
   return `<div class="lv-team-card${isMyTeam ? ' lv-my-team' : ''}">
     <div class="lv-card-header">
       <div class="lv-card-title">
@@ -1808,6 +1839,7 @@ function buildTeamCard(teamSlot, players, rosterSlots, hasSlots, teamName, isMyT
     ${needsBadges ? `<div class="lv-needs-row">
       <span class="lv-needs-label">Needs:</span>${needsBadges}
     </div>` : ''}
+    ${byeConflictSummary}
   </div>`;
 }
 
