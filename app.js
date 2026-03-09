@@ -864,6 +864,9 @@ async function connectSleeper(input, username) {
     // Fetch real team names + identify user's team (non-blocking)
     if (info.league_id) {
       fetchSleeperLeagueInfo(info.league_id, username ? username.trim() : '').catch(() => {});
+    } else {
+      // Mock/standalone draft — fetch participant display names from draft users
+      fetchSleeperDraftUsers(draftId, info.draft_order || {}, username ? username.trim() : '').catch(() => {});
     }
 
     // Initial pick fetch
@@ -978,16 +981,16 @@ function trySleeperWebSocket(draftId) {
    SECTION 11 — ESPN API INTEGRATION
    ============================================================ */
 
-async function connectESPN(leagueId, year) {
+async function connectESPN(leagueId, year, myTeamName) {
   if (!leagueId || !/^\d+$/.test(leagueId.trim())) {
     showToast('Enter a valid ESPN League ID', 'error');
     return;
   }
 
-  const y = (year || '2025').trim();
+  const y = (year && year.trim()) || new Date().getFullYear().toString();
   setConnectionState('connecting', 'Connecting to ESPN...');
 
-  const url = `https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/${y}/segments/0/leagues/${leagueId}?view=mDraftDetail`;
+  const url = `https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/${y}/segments/0/leagues/${leagueId}?view=mDraftDetail&view=mTeam`;
 
   try {
     const data = await apiFetch(url);
@@ -997,6 +1000,7 @@ async function connectESPN(leagueId, year) {
     state.connection.leagueId  = leagueId.trim();
     state.connection.year      = y;
 
+    processESPNTeams(data, (myTeamName || '').trim());
     processESPNPicks(data);
 
     state.connection.interval = setInterval(() => pollESPN(leagueId.trim(), y), 15000);
@@ -1011,14 +1015,38 @@ async function connectESPN(leagueId, year) {
 
 async function pollESPN(leagueId, year) {
   try {
-    const url  = `https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/${year}/segments/0/leagues/${leagueId}?view=mDraftDetail`;
+    const url  = `https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/${year}/segments/0/leagues/${leagueId}?view=mDraftDetail&view=mTeam`;
     const data = await apiFetch(url);
     if (!data || !data.draftDetail) return;
+    if (!state.league.teams) processESPNTeams(data, '');
     processESPNPicks(data);
     state.connection.lastUpdated = Date.now();
     saveState();
     renderAll();
   } catch(e) { console.warn('ESPN poll error', e); }
+}
+
+function processESPNTeams(data, myTeamName) {
+  const teams = data.teams || [];
+  if (!teams.length) return;
+  state.league.teams = teams.length;
+  teams.forEach(t => {
+    state.league.teamNames[t.id] = t.name || t.abbrev || `Team ${t.id}`;
+  });
+  if (myTeamName) autoDetectMyTeam(myTeamName);
+  if (state.leagueViewActive) renderLeagueView();
+}
+
+function autoDetectMyTeam(myTeamName) {
+  if (!myTeamName) return;
+  const needle = myTeamName.toLowerCase();
+  const match = Object.entries(state.league.teamNames)
+    .find(([, name]) => name.toLowerCase().includes(needle) || needle.includes(name.toLowerCase()));
+  if (match) {
+    state.league.myRosterId = Number(match[0]);
+    showToast(`Found your team: ${match[1]}`, 'success');
+    if (state.leagueViewActive) renderLeagueView();
+  }
 }
 
 function processESPNPicks(data) {
@@ -1057,9 +1085,8 @@ function espnPosMap(id) {
    SECTION 11b — YAHOO FANTASY INTEGRATION
    ============================================================ */
 
-async function connectYahoo(leagueKey, year) {
+async function connectYahoo(leagueKey, myTeamName) {
   leagueKey = (leagueKey || '').trim();
-  year      = (year || '2025').trim();
 
   if (!leagueKey) {
     showToast('Enter a Yahoo Fantasy league key (e.g. 449.l.12345678)', 'error');
@@ -1077,9 +1104,11 @@ async function connectYahoo(leagueKey, year) {
 
     state.connection.platform  = 'yahoo';
     state.connection.leagueId  = leagueKey;
-    state.connection.year      = year;
 
     processYahooPicks(data);
+
+    // Fetch team names non-blocking
+    fetchYahooTeamNames(leagueKey, (myTeamName || '').trim()).catch(() => {});
 
     state.connection.interval = setInterval(() => pollYahoo(leagueKey), 15000);
     setConnectionState('polling', `Yahoo: ${leagueKey}`);
@@ -1089,6 +1118,24 @@ async function connectYahoo(leagueKey, year) {
     setConnectionState('error', 'Yahoo connection failed');
     showToast(`Yahoo error: ${err.message}`, 'error');
   }
+}
+
+async function fetchYahooTeamNames(leagueKey, myTeamName) {
+  const url  = `https://fantasysports.yahooapis.com/fantasy/v2/league/${leagueKey}/teams?format=json`;
+  const data = await apiFetch(url);
+  const teamsRaw = data?.fantasy_content?.league?.[1]?.teams;
+  if (!teamsRaw) return;
+  const count = teamsRaw.count || 0;
+  for (let i = 0; i < count; i++) {
+    const teamArr = teamsRaw[i]?.team?.[0];
+    if (!Array.isArray(teamArr)) continue;
+    const teamId   = teamArr.find(x => x?.team_id)?.team_id;
+    const teamName = teamArr.find(x => x?.name)?.name;
+    if (teamId && teamName) state.league.teamNames[Number(teamId)] = teamName;
+  }
+  state.league.teams = count || state.league.teams;
+  if (myTeamName) autoDetectMyTeam(myTeamName);
+  if (state.leagueViewActive) renderLeagueView();
 }
 
 async function pollYahoo(leagueKey) {
@@ -1491,12 +1538,13 @@ function initEventListeners() {
     } else if (activePlatform === 'espn') {
       connectESPN(
         document.getElementById('espnLeagueInput').value,
-        document.getElementById('espnYearInput').value
+        document.getElementById('espnYearInput').value,
+        document.getElementById('espnMyTeamInput').value
       );
     } else if (activePlatform === 'yahoo') {
       connectYahoo(
         document.getElementById('yahooLeagueKeyInput').value,
-        document.getElementById('yahooYearInput').value
+        document.getElementById('yahooMyTeamInput').value
       );
     } else if (activePlatform === 'nfl') {
       connectNFL(
@@ -1878,6 +1926,24 @@ async function fetchSleeperLeagueInfo(leagueId, username) {
   if (myUserId && state.league.myRosterId) {
     showToast(`Found your team: ${state.league.teamNames[state.league.myRosterId]}`, 'success');
   }
+}
+
+/** Fetch Sleeper draft participants for mock/standalone drafts (no league_id) */
+async function fetchSleeperDraftUsers(draftId, draftOrder, username) {
+  const users = await apiFetch(`${SLEEPER_BASE}/draft/${draftId}/users`);
+  if (!Array.isArray(users) || !users.length) return;
+  users.forEach(u => {
+    const slot = draftOrder?.[u.user_id];
+    if (!slot) return;
+    state.league.teamNames[slot] = u.metadata?.team_name || u.display_name || `Team ${slot}`;
+    if (username && (u.username?.toLowerCase() === username.toLowerCase() ||
+        u.display_name?.toLowerCase() === username.toLowerCase())) {
+      state.league.myRosterId = slot;
+    }
+  });
+  if (state.leagueViewActive) renderLeagueView();
+  if (username && state.league.myRosterId)
+    showToast(`Found your team: ${state.league.teamNames[state.league.myRosterId]}`, 'success');
 }
 
 /** Manual "mark as my team" — lets users on non-Sleeper platforms identify their roster */
