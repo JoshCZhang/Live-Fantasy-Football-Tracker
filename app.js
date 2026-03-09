@@ -372,9 +372,9 @@ function renderSavedRankingSlots() {
             onblur="renameRankingSlot(${i}, this.value)"
             placeholder="Slot ${i + 1}">
           <div class="slot-actions">
-            <button class="btn btn-sm btn-save-slot" onclick="saveRankingSlot(${i})">✦ Save Here</button>
+            ${hasData ? '' : `<button class="btn btn-sm btn-save-slot" onclick="saveRankingSlot(${i})">✦ Save Here</button>`}
             ${hasData ? `<button class="btn btn-sm btn-load-slot" onclick="loadRankingSlot(${i})">Load</button>` : ''}
-            ${hasData ? `<button class="btn btn-sm btn-clear-slot" onclick="clearRankingSlot(${i})" title="Clear this slot">✕</button>` : ''}
+            ${hasData ? `<button class="btn btn-sm btn-delete-slot" onclick="clearRankingSlot(${i})" title="Delete this slot">✕ Delete</button>` : ''}
           </div>
         </div>
         <div class="slot-meta ${hasData ? 'has-data' : ''}">${meta}</div>
@@ -1931,8 +1931,8 @@ async function checkAndRefreshPlayers() {
       buildPlayersFromSleeperList(cached.players);
     } else {
       applyPlayerMetadata(cached.players);
-      reapplySleeperRanks();
     }
+    reapplyAdpRanks();
     updateDataFreshness(new Date(cached.timestamp));
     renderAll();
     return;
@@ -1960,6 +1960,7 @@ async function checkAndRefreshPlayers() {
       reapplySleeperRanks();
     }
     applyAdpData(adpMap);
+    reapplyAdpRanks();
 
     updateDataFreshness(new Date());
     hideLoadingOverlay();
@@ -2014,6 +2015,16 @@ function applyAdpData(adpMap) {
       p.adp = adpMap[p.sleeperId];
     }
   });
+}
+
+/**
+ * Re-sort players by ADP, preserving manually locked positions.
+ * Players without ADP data sort to the end.
+ */
+function reapplyAdpRanks() {
+  state.players.forEach(p => { p.rankLocked = false; });
+  state.players.sort((a, b) => (a.adp ?? 9999) - (b.adp ?? 9999));
+  state.players.forEach((p, i) => { p.rank = i + 1; });
 }
 
 function parseSleeperPlayerResponse(raw) {
