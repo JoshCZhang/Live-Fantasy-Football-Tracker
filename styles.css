@@ -819,23 +819,23 @@ body {
 }
 .slot-meta.has-data { color: var(--text2); }
 .btn-save-slot {
-  background: rgba(37,99,235,.15);
-  border-color: rgba(37,99,235,.3);
-  color: var(--wr);
-}
-.btn-save-slot:hover { background: rgba(37,99,235,.25); }
-.btn-load-slot {
   background: rgba(34,197,94,.1);
   border-color: rgba(34,197,94,.25);
   color: var(--ok);
 }
-.btn-load-slot:hover { background: rgba(34,197,94,.18); }
-.btn-clear-slot {
-  background: none;
-  border-color: var(--border2);
-  color: var(--text3);
+.btn-save-slot:hover { background: rgba(34,197,94,.18); }
+.btn-load-slot {
+  background: rgba(37,99,235,.15);
+  border-color: rgba(37,99,235,.3);
+  color: var(--wr);
 }
-.btn-clear-slot:hover { border-color: var(--error); color: var(--error); }
+.btn-load-slot:hover { background: rgba(37,99,235,.25); }
+.btn-delete-slot {
+  background: rgba(220,38,38,.12);
+  border-color: rgba(220,38,38,.35);
+  color: #f87171;
+}
+.btn-delete-slot:hover { background: rgba(220,38,38,.22); border-color: rgba(220,38,38,.6); }
 
 .modal-header {
   display: flex;

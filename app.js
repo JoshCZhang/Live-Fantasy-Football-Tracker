@@ -372,9 +372,9 @@ function renderSavedRankingSlots() {
             onblur="renameRankingSlot(${i}, this.value)"
             placeholder="Slot ${i + 1}">
           <div class="slot-actions">
-            <button class="btn btn-sm btn-save-slot" onclick="saveRankingSlot(${i})">✦ Save Here</button>
+            ${hasData ? '' : `<button class="btn btn-sm btn-save-slot" onclick="saveRankingSlot(${i})">✦ Save Here</button>`}
             ${hasData ? `<button class="btn btn-sm btn-load-slot" onclick="loadRankingSlot(${i})">Load</button>` : ''}
-            ${hasData ? `<button class="btn btn-sm btn-clear-slot" onclick="clearRankingSlot(${i})" title="Clear this slot">✕</button>` : ''}
+            ${hasData ? `<button class="btn btn-sm btn-delete-slot" onclick="clearRankingSlot(${i})" title="Delete this slot">✕ Delete</button>` : ''}
           </div>
         </div>
         <div class="slot-meta ${hasData ? 'has-data' : ''}">${meta}</div>
