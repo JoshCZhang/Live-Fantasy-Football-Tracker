@@ -1727,11 +1727,11 @@ function renderLeagueView() {
     const BYE_CONFLICT_COLORS = ['#d946ef','#06b6d4','#84cc16','#fb7185','#f97316','#818cf8','#eab308','#10b981'];
     const myPlayers = teamRosters[state.league.myRosterId] || [];
     const weekCounts = {};
-    myPlayers.forEach(p => { if (p.byeWeek) weekCounts[p.byeWeek] = (weekCounts[p.byeWeek] || 0) + 1; });
+    myPlayers.forEach(p => { const k = p.byeWeek ?? 'null'; weekCounts[k] = (weekCounts[k] || 0) + 1; });
     let colorIdx = 0;
     Object.entries(weekCounts)
       .filter(([, count]) => count >= 2)
-      .sort(([a], [b]) => Number(a) - Number(b))
+      .sort(([a], [b]) => (a === 'null' ? 1 : b === 'null' ? -1 : Number(a) - Number(b)))
       .forEach(([week]) => { byeColorMap[week] = BYE_CONFLICT_COLORS[colorIdx++ % BYE_CONFLICT_COLORS.length]; });
   }
 
@@ -1777,11 +1777,10 @@ function buildTeamCard(teamSlot, players, rosterSlots, hasSlots, teamName, isMyT
       const color      = isTrueFlex ? '#ffffff' : (POS_COLORS[p.position] || '#6b7280');
       const labelStyle = isTrueFlex ? 'background:#ffffff;color:#1f2937' : `background:${color}`;
       const inj        = p.injuryStatus ? buildInjuryBadge(p.injuryStatus) : '';
-      const byeConflictColor = p.byeWeek ? byeColorMap[p.byeWeek] : null;
+      const byeKey     = p.byeWeek ?? 'null';
+      const byeConflictColor = byeColorMap[byeKey] || null;
       const rowStyle   = byeConflictColor ? ` style="background:${byeConflictColor}18;border-left:2px solid ${byeConflictColor}99;"` : '';
-      const byeChip    = p.byeWeek
-        ? `<span class="lv-slot-bye${byeConflictColor ? ' lv-slot-bye--conflict' : ''}"${byeConflictColor ? ` style="color:${byeConflictColor};border-color:${byeConflictColor}55;"` : ''}>BYE ${p.byeWeek}</span>`
-        : '';
+      const byeChip    = `<span class="lv-slot-bye${byeConflictColor ? ' lv-slot-bye--conflict' : ''}"${byeConflictColor ? ` style="color:${byeConflictColor};border-color:${byeConflictColor}55;"` : ''}>BYE ${p.byeWeek ?? 'TBD'}</span>`;
       return `<div class="lv-slot lv-slot--filled"${rowStyle}>
         <span class="lv-slot-label" style="${labelStyle}">${slot.label}</span>
         <span class="lv-slot-name">${esc(p.name)}${inj}</span>
@@ -1818,8 +1817,9 @@ function buildTeamCard(teamSlot, players, rosterSlots, hasSlots, teamName, isMyT
     ? `<div class="lv-bye-conflicts">
         <span class="lv-bye-conflicts-label">Bye conflicts:</span>
         ${byeConflictEntries.map(([week, color]) => {
-          const count = players.filter(p => p.byeWeek == week).length;
-          return `<span class="lv-bye-conflict-chip" style="color:${color};border-color:${color}55;background:${color}18;">Wk ${week} · ${count} players</span>`;
+          const count = week === 'null' ? players.filter(p => !p.byeWeek).length : players.filter(p => p.byeWeek == week).length;
+          const label = week === 'null' ? 'TBD' : `Wk ${week}`;
+          return `<span class="lv-bye-conflict-chip" style="color:${color};border-color:${color}55;background:${color}18;">${label} · ${count} players</span>`;
         }).join('')}
       </div>`
     : '';
