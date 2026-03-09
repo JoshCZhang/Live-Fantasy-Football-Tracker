@@ -987,7 +987,9 @@ async function connectESPN(leagueId, year, myTeamName) {
     return;
   }
 
-  const y = (year && year.trim()) || new Date().getFullYear().toString();
+  const now = new Date();
+  const defaultYear = now.getMonth() < 8 ? now.getFullYear() - 1 : now.getFullYear();
+  const y = (year && year.trim()) || defaultYear.toString();
   setConnectionState('connecting', 'Connecting to ESPN...');
 
   const url = `https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/${y}/segments/0/leagues/${leagueId}?view=mDraftDetail&view=mTeam`;
