@@ -159,8 +159,10 @@
         <p class="cfg-desc">Enter your ESPN Fantasy Football league details.</p>
         <label class="input-label">League ID</label>
         <input type="text" id="espnLeagueInput" class="cfg-input" placeholder="e.g. 12345678">
-        <label class="input-label">Season Year</label>
-        <input type="text" id="espnYearInput" class="cfg-input" placeholder="2025" value="2025">
+        <label class="input-label">Your Team Name <span style="font-weight:400;color:var(--text3)">(optional — highlights your team in League View)</span></label>
+        <input type="text" id="espnMyTeamInput" class="cfg-input" placeholder="e.g. The Gronkowski Effect">
+        <label class="input-label">Season Year <span style="font-weight:400;color:var(--text3)">(optional — defaults to current year)</span></label>
+        <input type="text" id="espnYearInput" class="cfg-input" placeholder="2025">
         <p class="cfg-note cfg-warn">⚠ ESPN restricts cross-origin requests for private leagues. Works best for public leagues. Updates poll every 15 seconds.</p>
       </div>
 
@@ -168,8 +170,8 @@
         <p class="cfg-desc">Enter your Yahoo Fantasy league details. You must be logged into Yahoo Fantasy in this browser for live pick tracking to work.</p>
         <label class="input-label">League Key</label>
         <input type="text" id="yahooLeagueKeyInput" class="cfg-input" placeholder="e.g. 449.l.12345678">
-        <label class="input-label">Season Year</label>
-        <input type="text" id="yahooYearInput" class="cfg-input" placeholder="2025" value="2025">
+        <label class="input-label">Your Team Name <span style="font-weight:400;color:var(--text3)">(optional — highlights your team in League View)</span></label>
+        <input type="text" id="yahooMyTeamInput" class="cfg-input" placeholder="e.g. The Gronkowski Effect">
         <p class="cfg-note cfg-warn">⚠ Yahoo Fantasy requires you to be logged in. Polls draft results every 15 seconds. Private leagues may need Yahoo login cookies present in this browser session.</p>
       </div>
 
