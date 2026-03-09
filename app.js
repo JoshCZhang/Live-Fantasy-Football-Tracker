@@ -994,14 +994,14 @@ async function connectESPN(leagueId, year, myTeamName) {
 
   try {
     const data = await apiFetch(url);
-    if (!data || !data.draftDetail) throw new Error('Draft data not found. League may be private or ID is wrong.');
+    if (!data) throw new Error('No response. League may be private or ID is wrong.');
 
     state.connection.platform  = 'espn';
     state.connection.leagueId  = leagueId.trim();
     state.connection.year      = y;
 
     processESPNTeams(data, (myTeamName || '').trim());
-    processESPNPicks(data);
+    if (data.draftDetail) processESPNPicks(data);
 
     state.connection.interval = setInterval(() => pollESPN(leagueId.trim(), y), 15000);
     setConnectionState('polling', `ESPN League ${leagueId}`);
