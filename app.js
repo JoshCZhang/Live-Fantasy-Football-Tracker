@@ -589,6 +589,7 @@ function buildRow(player) {
       </div>
     </td>
     <td class="col-tags"><div class="tag-cell-icons">${tagIcons}</div></td>
+    <td class="col-spacer"></td>
     <td class="col-pos">
       <span class="pos-badge" style="background:${posColor}">${player.position}</span>
     </td>
@@ -603,7 +604,6 @@ function buildRow(player) {
     </td>
     <td class="col-pick col-snake-only">${pickInfo}</td>
     <td class="col-final-bid col-auction-only">${buildFinalBidCell(player)}</td>
-    <td class="col-spacer"></td>
   </tr>`;
 }
 
