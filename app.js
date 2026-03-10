@@ -341,6 +341,7 @@ function persistSavedRankings(slots) {
 function saveRankingSlot(slotIndex) {
   const slots = loadSavedRankings();
   slots[slotIndex].players   = JSON.parse(JSON.stringify(state.players));
+  slots[slotIndex].draftMode = state.draftMode;
   slots[slotIndex].timestamp = Date.now();
   persistSavedRankings(slots);
   showToast(`Rankings saved to ${slots[slotIndex].name}`, 'success');
@@ -353,6 +354,7 @@ function loadRankingSlot(slotIndex) {
   if (!slot.players) { showToast('Nothing saved in this slot yet', 'error'); return; }
   if (!confirm(`Load "${slot.name}"? Current rankings will be replaced.`)) return;
   state.players = JSON.parse(JSON.stringify(slot.players));
+  if (slot.draftMode) state.draftMode = slot.draftMode;
   saveState();
   renderAll();
   showToast(`Loaded "${slot.name}"`, 'success');
@@ -611,19 +613,47 @@ function buildIdealBidCell(player) {
 }
 
 function buildFinalBidCell(player) {
-  const amount = player.auctionAmount || 0;
+  const amount = player.auctionAmount;
+  const label  = amount > 0 ? `$${amount}` : '$TBD';
+  const cls    = amount > 0 ? 'final-bid-val final-bid-val--set' : 'final-bid-val';
   let delta = '';
-  if (player.idealBid > 0 && player.auctionAmount > 0) {
-    const diff = player.idealBid - player.auctionAmount;
+  if (player.idealBid > 0 && amount > 0) {
+    const diff = player.idealBid - amount;
     if (diff > 0) delta = `<span class="value-delta value-delta--good">+$${diff}</span>`;
     else if (diff < 0) delta = `<span class="value-delta value-delta--bad">-$${Math.abs(diff)}</span>`;
   }
   return `<div class="final-bid-wrap">
-    <input type="number" class="final-bid-input" min="0" value="${amount}"
-      oninput="updateBidAmount(${player.id}, this.value)"
-      onclick="this.select()" placeholder="$0">
+    <span class="${cls}" onclick="startFinalBidEdit(event,${player.id})" title="Click to enter final bid">${label}</span>
     ${delta}
   </div>`;
+}
+
+function startFinalBidEdit(e, playerId) {
+  e.stopPropagation();
+  const span = e.currentTarget;
+  const p = state.players.find(x => x.id === playerId);
+  if (!p) return;
+
+  const input = document.createElement('input');
+  input.type      = 'number';
+  input.className = 'final-bid-input-edit';
+  input.value     = p.auctionAmount > 0 ? p.auctionAmount : '';
+  input.min       = 0;
+  input.placeholder = '0';
+  span.replaceWith(input);
+  input.select();
+
+  let saved = false;
+  const save = () => {
+    if (saved) return;
+    saved = true;
+    saveFinalBid(playerId, parseInt(input.value) || 0);
+  };
+  input.addEventListener('blur', save);
+  input.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter')  { ev.preventDefault(); input.blur(); }
+    else if (ev.key === 'Escape') { saved = true; renderPlayers(); }
+  });
 }
 
 function startIdealBidEdit(e, playerId) {
@@ -669,6 +699,22 @@ function saveIdealBid(playerId, value) {
   p.idealBid = value;
   saveState();
   renderPlayers();
+}
+
+function saveFinalBid(playerId, value) {
+  const p = state.players.find(x => x.id === playerId);
+  if (!p) return;
+  p.auctionAmount = value > 0 ? value : null;
+  // Auto-mark as drafted when a bid is entered; clear when bid is removed
+  if (value > 0 && !p.isDrafted) {
+    p.isDrafted = true;
+  } else if (value === 0) {
+    p.isDrafted = false;
+  }
+  computeAuctionBudgets();
+  saveState();
+  renderPlayers();
+  if (state.leagueViewActive) renderLeagueView();
 }
 
 function buildTierPill(player) {
@@ -1811,11 +1857,12 @@ function initEventListeners() {
   document.getElementById('resetDraftBtn').addEventListener('click', () => {
     if (!confirm('Reset all draft picks and tags? Rankings are preserved.')) return;
     state.players.forEach(p => {
-      p.isDrafted = false;
-      p.draftPick = null;
-      p.draftedBy = null;
-      p.rosterId  = null;
-      p.tags      = [];
+      p.isDrafted     = false;
+      p.draftPick     = null;
+      p.draftedBy     = null;
+      p.rosterId      = null;
+      p.tags          = [];
+      p.auctionAmount = null;
     });
     state.connection.knownPickNos = new Set();
     state.connection.recentPicks  = [];
