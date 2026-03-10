@@ -483,6 +483,11 @@ function getDisplayPlayers() {
    ============================================================ */
 
 function setDraftMode(mode) {
+  const isConnected = state.connection.status === 'connected' || state.connection.status === 'polling';
+  if (isConnected && mode !== state.draftMode) {
+    showToast('Disconnect from the league to switch modes', 'warning');
+    return;
+  }
   state.draftMode = mode;
   saveState();
   // Sync toggle buttons
@@ -501,8 +506,13 @@ function renderAll() {
   renderTicker();
   renderStats();
   // Sync mode toggle UI with state (in case of load/auto-detect)
-  document.getElementById('modeDraft')?.classList.toggle('active', state.draftMode === 'draft');
-  document.getElementById('modeAuction')?.classList.toggle('active', state.draftMode === 'auction');
+  const isConnected = state.connection.status === 'connected' || state.connection.status === 'polling';
+  const modeDraftBtn   = document.getElementById('modeDraft');
+  const modeAuctionBtn = document.getElementById('modeAuction');
+  modeDraftBtn?.classList.toggle('active',  state.draftMode === 'draft');
+  modeAuctionBtn?.classList.toggle('active', state.draftMode === 'auction');
+  modeDraftBtn?.classList.toggle('locked',   isConnected && state.draftMode !== 'draft');
+  modeAuctionBtn?.classList.toggle('locked', isConnected && state.draftMode !== 'auction');
 }
 
 function renderPlayers() {
