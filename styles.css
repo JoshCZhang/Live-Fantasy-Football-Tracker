@@ -1451,10 +1451,10 @@ code {
 }
 
 .tier-dropdown {
-  background: var(--surface2);
+  background: var(--bg3, #1c2128);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  box-shadow: 0 4px 12px rgba(0,0,0,.4);
+  box-shadow: 0 4px 12px rgba(0,0,0,.6);
   min-width: 52px;
   overflow: hidden;
 }
@@ -1466,7 +1466,7 @@ code {
   color: var(--text2);
   text-align: center;
 }
-.tier-dd-item:hover  { background: var(--surface3); color: var(--text1); }
+.tier-dd-item:hover  { background: var(--bg-hover, #21262d); color: var(--text, #e6edf3); }
 .tier-dd-item.active { color: var(--accent); }
 
 /* League View button — active state */
