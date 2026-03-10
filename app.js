@@ -31,6 +31,18 @@ const POS_COLORS = {
   DST: '#0d9488',
 };
 
+// Position-specific tier cutoffs (cumulative counts).
+// e.g. RB [4,10,18,28,38] → positions 1-4 = T1, 5-10 = T2, 11-18 = T3, etc.
+// Everything past the last cutoff = final tier.
+const TIER_BANDS = {
+  QB:  [3, 7, 12, 17, 23],
+  RB:  [4, 10, 18, 28, 38],
+  WR:  [4, 10, 18, 28, 38],
+  TE:  [2, 6, 12, 20, 30],
+  K:   [5],
+  DST: [5],
+};
+
 /* ── NFL Team Colors ───────────────────────────────────────── */
 const TEAM_COLORS = {
   ARI: '#97233F', ATL: '#A71930', BAL: '#241773', BUF: '#00338D',
@@ -409,7 +421,29 @@ function initDefaultPlayers() {
     byeWeek:      null,
     sleeperId:    null,
     adp:          null,
+    tier:         null,
+    tierLocked:   false,
   }));
+}
+
+/* ============================================================
+   SECTION 4b — TIER COMPUTATION
+   ============================================================ */
+
+function computeTiers() {
+  const posCounts = {};
+  const sorted = [...state.players].sort((a, b) => (a.adp ?? 9999) - (b.adp ?? 9999));
+  sorted.forEach(p => {
+    const pos = p.position;
+    posCounts[pos] = (posCounts[pos] || 0) + 1;
+    if (p.tierLocked) return;
+    const bands = TIER_BANDS[pos] || [5];
+    let tier = bands.length + 1;
+    for (let i = 0; i < bands.length; i++) {
+      if (posCounts[pos] <= bands[i]) { tier = i + 1; break; }
+    }
+    p.tier = tier;
+  });
 }
 
 /* ============================================================
@@ -460,7 +494,20 @@ function renderPlayers() {
     empty.classList.add('visible');
   } else {
     empty.classList.remove('visible');
-    tbody.innerHTML = players.map(p => buildRow(p)).join('');
+    if (state.posFilter !== 'ALL') {
+      let html = '';
+      let lastTier = null;
+      for (const p of players) {
+        if (p.tier !== lastTier) {
+          html += `<tr class="tier-divider"><td colspan="10">— Tier ${p.tier ?? '?'} ${p.position} —</td></tr>`;
+          lastTier = p.tier;
+        }
+        html += buildRow(p);
+      }
+      tbody.innerHTML = html;
+    } else {
+      tbody.innerHTML = players.map(p => buildRow(p)).join('');
+    }
     attachDragEvents();
   }
 }
@@ -523,6 +570,7 @@ function buildRow(player) {
       <span class="pos-badge" style="background:${posColor}">${player.position}</span>
     </td>
     <td class="col-adp">${player.adp != null ? player.adp.toFixed(1) : '—'}</td>
+    <td class="col-tier">${buildTierPill(player)}</td>
     <td class="col-drafted">
       <button class="drafted-btn ${player.isDrafted ? 'is-drafted' : ''}"
               onclick="toggleDrafted(${player.id})">
@@ -531,6 +579,55 @@ function buildRow(player) {
     </td>
     <td class="col-pick">${pickInfo}</td>
   </tr>`;
+}
+
+function buildTierPill(player) {
+  const label      = player.tier ? `T${player.tier}` : '—';
+  const cls        = player.tier ? `tier-pill-${Math.min(player.tier, 6)}` : 'tier-pill-none';
+  const lockedAttr = player.tierLocked ? ' data-locked="1"' : '';
+  const title      = player.tierLocked ? 'Tier locked — right-click to clear' : 'Click to set tier';
+  return `<span class="tier-pill ${cls}"${lockedAttr}
+    onclick="openTierDropdown(event,${player.id})"
+    oncontextmenu="clearTierLock(event,${player.id})"
+    title="${title}">${label}</span>`;
+}
+
+function openTierDropdown(e, playerId) {
+  e.stopPropagation();
+  document.querySelectorAll('.tier-dropdown').forEach(el => el.remove());
+  const p = state.players.find(x => x.id === playerId);
+  if (!p) return;
+  const max = (p.position === 'K' || p.position === 'DST') ? 2 : 6;
+  const items = Array.from({length: max}, (_, i) => i + 1)
+    .map(t => `<div class="tier-dd-item${p.tier === t ? ' active' : ''}" onclick="setTier(${playerId},${t})">T${t}</div>`)
+    .join('');
+  const dd = document.createElement('div');
+  dd.className = 'tier-dropdown';
+  dd.innerHTML = items;
+  const rect = e.target.getBoundingClientRect();
+  dd.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.bottom + 2}px;z-index:9999`;
+  document.body.appendChild(dd);
+  setTimeout(() => document.addEventListener('click', () => dd.remove(), {once: true}), 0);
+}
+
+function setTier(playerId, tier) {
+  const p = state.players.find(x => x.id === playerId);
+  if (!p) return;
+  p.tier = tier;
+  p.tierLocked = true;
+  document.querySelectorAll('.tier-dropdown').forEach(el => el.remove());
+  saveState();
+  renderPlayers();
+}
+
+function clearTierLock(e, playerId) {
+  e.preventDefault();
+  const p = state.players.find(x => x.id === playerId);
+  if (!p) return;
+  p.tierLocked = false;
+  computeTiers();
+  saveState();
+  renderPlayers();
 }
 
 function renderConnectionStatus() {
@@ -752,6 +849,7 @@ function onDrop(e) {
   src.rankLocked = true;
   sorted.forEach((p, i) => { p.rank = i + 1; });
 
+  if (!state.players.some(p => p.isDrafted)) computeTiers();
   saveState();
   renderPlayers();
   renderStats();
@@ -2125,6 +2223,7 @@ function reapplyAdpRanks() {
   state.players.forEach(p => { p.rankLocked = false; });
   state.players.sort((a, b) => (a.adp ?? 9999) - (b.adp ?? 9999));
   state.players.forEach((p, i) => { p.rank = i + 1; });
+  if (!state.players.some(p => p.isDrafted)) computeTiers();
 }
 
 function parseSleeperPlayerResponse(raw) {
@@ -2346,6 +2445,7 @@ function scheduleNextRefresh() {
 
 async function init() {
   loadState();
+  computeTiers();
   initEventListeners();
 
   // Render immediately with whatever we have
