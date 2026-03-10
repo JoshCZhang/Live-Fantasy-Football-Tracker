@@ -272,13 +272,16 @@ let state = {
     overIndex: null,
   },
   nextId: 146,
+  draftMode: 'draft',        // 'draft' | 'auction'
   // League View
   league: {
-    teams:       0,          // number of fantasy teams
-    rounds:      0,          // total rounds in draft
-    rosterSlots: {},         // { QB:1, RB:2, WR:2, TE:1, FLEX:1, K:1, DST:1, BN:6, SFLX:0 }
-    teamNames:   {},         // { rosterId: 'Team Name' }
-    myRosterId:  null,       // which roster slot belongs to the user
+    teams:          0,       // number of fantasy teams
+    rounds:         0,       // total rounds in draft
+    rosterSlots:    {},      // { QB:1, RB:2, WR:2, TE:1, FLEX:1, K:1, DST:1, BN:6, SFLX:0 }
+    teamNames:      {},      // { rosterId: 'Team Name' }
+    myRosterId:     null,    // which roster slot belongs to the user
+    auctionBudget:  0,       // per-team salary cap (e.g. 200)
+    auctionSpent:   {},      // { rosterId: totalSpent }
   },
   leagueViewActive: false,
 };
@@ -293,8 +296,9 @@ const SAVED_RANKINGS_KEY  = 'fantasySavedRankings_v1';
 function saveState() {
   try {
     const data = {
-      players: state.players,
-      nextId:  state.nextId,
+      players:   state.players,
+      nextId:    state.nextId,
+      draftMode: state.draftMode,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch(e) { console.warn('Save failed', e); }
@@ -305,8 +309,9 @@ function loadState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const data = JSON.parse(raw);
-      state.players = data.players || [];
-      state.nextId  = data.nextId  || 146;
+      state.players   = data.players   || [];
+      state.nextId    = data.nextId    || 146;
+      state.draftMode = data.draftMode || 'draft';
       return;
     }
   } catch(e) { console.warn('Load failed', e); }
@@ -423,6 +428,8 @@ function initDefaultPlayers() {
     adp:          null,
     tier:         null,
     tierLocked:   false,
+    idealBid:     0,
+    auctionAmount: null,
   }));
 }
 
@@ -473,6 +480,15 @@ function getDisplayPlayers() {
    SECTION 6 — RENDERING
    ============================================================ */
 
+function setDraftMode(mode) {
+  state.draftMode = mode;
+  saveState();
+  // Sync toggle buttons
+  document.getElementById('modeDraft')?.classList.toggle('active', mode === 'draft');
+  document.getElementById('modeAuction')?.classList.toggle('active', mode === 'auction');
+  renderAll();
+}
+
 function renderAll() {
   if (state.leagueViewActive) {
     renderLeagueView();
@@ -482,12 +498,18 @@ function renderAll() {
   renderConnectionStatus();
   renderTicker();
   renderStats();
+  // Sync mode toggle UI with state (in case of load/auto-detect)
+  document.getElementById('modeDraft')?.classList.toggle('active', state.draftMode === 'draft');
+  document.getElementById('modeAuction')?.classList.toggle('active', state.draftMode === 'auction');
 }
 
 function renderPlayers() {
   const players = getDisplayPlayers();
   const tbody   = document.getElementById('playerTableBody');
   const empty   = document.getElementById('emptyState');
+
+  // Toggle auction/snake column visibility via body class
+  document.body.classList.toggle('auction-mode', state.draftMode === 'auction');
 
   if (players.length === 0) {
     tbody.innerHTML = '';
@@ -499,7 +521,7 @@ function renderPlayers() {
       let lastTier = null;
       for (const p of players) {
         if (p.tier !== lastTier) {
-          html += `<tr class="tier-divider"><td colspan="10">— Tier ${p.tier ?? '?'} ${p.position} —</td></tr>`;
+          html += `<tr class="tier-divider"><td colspan="11">— Tier ${p.tier ?? '?'} ${p.position} —</td></tr>`;
           lastTier = p.tier;
         }
         html += buildRow(p);
@@ -569,7 +591,8 @@ function buildRow(player) {
     <td class="col-pos">
       <span class="pos-badge" style="background:${posColor}">${player.position}</span>
     </td>
-    <td class="col-adp">${player.adp != null ? player.adp.toFixed(1) : '—'}</td>
+    <td class="col-adp col-snake-only">${player.adp != null ? player.adp.toFixed(1) : '—'}</td>
+    <td class="col-ideal-bid col-auction-only">${buildIdealBidCell(player)}</td>
     <td class="col-tier">${buildTierPill(player)}</td>
     <td class="col-drafted">
       <button class="drafted-btn ${player.isDrafted ? 'is-drafted' : ''}"
@@ -577,8 +600,75 @@ function buildRow(player) {
         ${draftedLabel}
       </button>
     </td>
-    <td class="col-pick">${pickInfo}</td>
+    <td class="col-pick col-snake-only">${pickInfo}</td>
+    <td class="col-final-bid col-auction-only">${buildFinalBidCell(player)}</td>
   </tr>`;
+}
+
+function buildIdealBidCell(player) {
+  const val = player.idealBid || 0;
+  return `<span class="ideal-bid-val" onclick="startIdealBidEdit(event,${player.id})" title="Click to set your target price">$${val}</span>`;
+}
+
+function buildFinalBidCell(player) {
+  const amount = player.auctionAmount || 0;
+  let delta = '';
+  if (player.idealBid > 0 && player.auctionAmount > 0) {
+    const diff = player.idealBid - player.auctionAmount;
+    if (diff > 0) delta = `<span class="value-delta value-delta--good">+$${diff}</span>`;
+    else if (diff < 0) delta = `<span class="value-delta value-delta--bad">-$${Math.abs(diff)}</span>`;
+  }
+  return `<div class="final-bid-wrap">
+    <input type="number" class="final-bid-input" min="0" value="${amount}"
+      oninput="updateBidAmount(${player.id}, this.value)"
+      onclick="this.select()" placeholder="$0">
+    ${delta}
+  </div>`;
+}
+
+function startIdealBidEdit(e, playerId) {
+  e.stopPropagation();
+  const span = e.currentTarget;
+  const p = state.players.find(x => x.id === playerId);
+  if (!p) return;
+
+  const input = document.createElement('input');
+  input.type      = 'number';
+  input.className = 'ideal-bid-input-edit';
+  input.value     = p.idealBid || 0;
+  input.min       = 0;
+  span.replaceWith(input);
+  input.select();
+
+  const save = () => saveIdealBid(playerId, parseInt(input.value) || 0);
+  input.addEventListener('blur', save);
+  input.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
+    else if (ev.key === 'Tab') {
+      ev.preventDefault();
+      save();
+      // Move to next player's ideal bid
+      const all = [...document.querySelectorAll('.ideal-bid-val')];
+      const idx = all.indexOf(document.querySelector(`.ideal-bid-val`));
+      const rows = [...document.querySelectorAll('.player-row')];
+      const myRow = input.closest('.player-row');
+      const myIdx = rows.indexOf(myRow);
+      if (myIdx !== -1 && myIdx + 1 < rows.length) {
+        const nextSpan = rows[myIdx + 1].querySelector('.ideal-bid-val');
+        if (nextSpan) nextSpan.click();
+      }
+    } else if (ev.key === 'Escape') {
+      renderPlayers();
+    }
+  });
+}
+
+function saveIdealBid(playerId, value) {
+  const p = state.players.find(x => x.id === playerId);
+  if (!p) return;
+  p.idealBid = value;
+  saveState();
+  renderPlayers();
 }
 
 function buildTierPill(player) {
@@ -948,10 +1038,18 @@ async function connectSleeper(input, username) {
     state.connection.platform  = 'sleeper';
     state.connection.draftId   = draftId;
 
+    // Auto-detect draft mode
+    const detectedMode = info.type === 'auction' ? 'auction' : 'draft';
+    if (detectedMode !== state.draftMode) {
+      state.draftMode = detectedMode;
+      showToast(detectedMode === 'auction' ? 'Auction draft detected' : 'Draft detected', 'info');
+    }
+
     // Store draft/roster settings for League View
     if (info.settings) {
       state.league.teams  = info.settings.teams  || 12;
       state.league.rounds = info.settings.rounds || 15;
+      if (info.settings.budget) state.league.auctionBudget = info.settings.budget;
       state.league.rosterSlots = {
         QB:   info.settings.slots_qb         || 1,
         RB:   info.settings.slots_rb         || 2,
@@ -1038,6 +1136,9 @@ function processSleeperPick(pick) {
     player.draftedBy = meta.owner_id
       ? (meta.owner_id.toString().substring(0, 10))
       : null;
+    // Auction: store bid amount only if user hasn't entered one
+    const syncedAmount = parseInt(meta.amount) || null;
+    if (syncedAmount && !player.auctionAmount) player.auctionAmount = syncedAmount;
   }
 
   // Add to recent picks ticker (track regardless of match)
@@ -1085,7 +1186,7 @@ function trySleeperWebSocket(draftId) {
    SECTION 11 — ESPN API INTEGRATION
    ============================================================ */
 
-async function connectESPN(leagueId, year, myTeamName) {
+async function connectESPN(leagueId, year, myTeamName, draftType, budget) {
   if (!leagueId || !/^\d+$/.test(leagueId.trim())) {
     showToast('Enter a valid ESPN League ID', 'error');
     return;
@@ -1105,6 +1206,12 @@ async function connectESPN(leagueId, year, myTeamName) {
     state.connection.platform  = 'espn';
     state.connection.leagueId  = leagueId.trim();
     state.connection.year      = y;
+
+    // Apply draft mode from connect panel selection
+    if (draftType) {
+      state.draftMode = draftType;
+      if (draftType === 'auction' && budget >= 1) state.league.auctionBudget = budget;
+    }
 
     processESPNTeams(data, (myTeamName || '').trim());
     if (data.draftDetail) processESPNPicks(data);
@@ -1191,7 +1298,7 @@ function espnPosMap(id) {
    SECTION 11b — YAHOO FANTASY INTEGRATION
    ============================================================ */
 
-async function connectYahoo(leagueKey, myTeamName) {
+async function connectYahoo(leagueKey, myTeamName, draftType, budget) {
   leagueKey = (leagueKey || '').trim();
 
   if (!leagueKey) {
@@ -1210,6 +1317,12 @@ async function connectYahoo(leagueKey, myTeamName) {
 
     state.connection.platform  = 'yahoo';
     state.connection.leagueId  = leagueKey;
+
+    // Apply draft mode from connect panel selection
+    if (draftType) {
+      state.draftMode = draftType;
+      if (draftType === 'auction' && budget >= 1) state.league.auctionBudget = budget;
+    }
 
     processYahooPicks(data);
 
@@ -1378,7 +1491,7 @@ function disconnect() {
   state.connection.statusMsg     = 'Not Connected';
   state.connection.lastUpdated   = null;
   // Reset league info
-  state.league = { teams: 0, rounds: 0, rosterSlots: {}, teamNames: {}, myRosterId: null };
+  state.league = { teams: 0, rounds: 0, rosterSlots: {}, teamNames: {}, myRosterId: null, auctionBudget: 0, auctionSpent: {} };
   // Close league view if open
   if (state.leagueViewActive) closeLeagueView();
   renderConnectionStatus();
@@ -1642,15 +1755,23 @@ function initEventListeners() {
         document.getElementById('sleeperUsernameInput').value
       );
     } else if (activePlatform === 'espn') {
+      const espnDraftType = document.querySelector('input[name="espnDraftType"]:checked')?.value || 'draft';
+      const espnBudget    = parseInt(document.getElementById('espnBudgetInput')?.value) || 0;
       connectESPN(
         document.getElementById('espnLeagueInput').value,
         document.getElementById('espnYearInput').value,
-        document.getElementById('espnMyTeamInput').value
+        document.getElementById('espnMyTeamInput').value,
+        espnDraftType,
+        espnBudget
       );
     } else if (activePlatform === 'yahoo') {
+      const yahooDraftType = document.querySelector('input[name="yahooDraftType"]:checked')?.value || 'draft';
+      const yahooBudget    = parseInt(document.getElementById('yahooBudgetInput')?.value) || 0;
       connectYahoo(
         document.getElementById('yahooLeagueKeyInput').value,
-        document.getElementById('yahooMyTeamInput').value
+        document.getElementById('yahooMyTeamInput').value,
+        yahooDraftType,
+        yahooBudget
       );
     } else if (activePlatform === 'nfl') {
       connectNFL(
@@ -1837,6 +1958,8 @@ function renderLeagueView() {
   const subtitle  = document.getElementById('lvSubtitle');
   if (!container) return;
 
+  if (state.draftMode === 'auction') computeAuctionBudgets();
+
   const numTeams = getNumTeams();
   const drafted  = state.players.filter(p => p.isDrafted);
 
@@ -1966,6 +2089,23 @@ function buildTeamCard(teamSlot, players, rosterSlots, hasSlots, teamName, isMyT
     ? `<span class="lv-picks-left">${picksLeft} picks left</span>`
     : `<span class="lv-picks-left">${players.length} picks</span>`;
 
+  // Auction budget bar
+  let budgetBar = '';
+  if (state.draftMode === 'auction' && state.league.auctionBudget > 0) {
+    const budget  = state.league.auctionBudget;
+    const spent   = state.league.auctionSpent[teamSlot] || 0;
+    const left    = budget - spent;
+    const pct     = Math.max(0, Math.min(100, (left / budget) * 100));
+    const barColor = pct > 50 ? '#22c55e' : pct > 25 ? '#f59e0b' : '#ef4444';
+    budgetBar = `<div class="lv-budget-bar-wrap">
+      <div class="lv-budget-bar" style="width:${pct.toFixed(1)}%;background:${barColor}"></div>
+    </div>
+    <div class="lv-budget-text">
+      <span style="color:${barColor}">$${left} left</span>
+      <span class="lv-budget-spent">$${spent} spent</span>
+    </div>`;
+  }
+
   const byeConflictEntries = Object.entries(byeColorMap).sort(([a], [b]) => Number(a) - Number(b));
   const byeConflictSummary = byeConflictEntries.length
     ? `<div class="lv-bye-conflicts">
@@ -1989,6 +2129,7 @@ function buildTeamCard(teamSlot, players, rosterSlots, hasSlots, teamName, isMyT
         ${markBtn}
       </div>
     </div>
+    ${budgetBar}
     <div class="lv-roster">${rosterRows || '<div class="lv-no-picks">No picks yet</div>'}</div>
     ${needsBadges ? `<div class="lv-needs-row">
       <span class="lv-needs-label">Needs:</span>${needsBadges}
@@ -2055,6 +2196,44 @@ async function fetchSleeperDraftUsers(draftId, draftOrder, username) {
 /** Manual "mark as my team" — lets users on non-Sleeper platforms identify their roster */
 function markMyTeam(rosterId) {
   state.league.myRosterId = state.league.myRosterId === rosterId ? null : rosterId;
+  if (state.leagueViewActive) renderLeagueView();
+}
+
+/* ── Connect modal: validate draft type inputs ─────────────── */
+function validateDraftTypeInputs(platform) {
+  const type   = document.querySelector(`input[name="${platform}DraftType"]:checked`)?.value;
+  const budgetRow = document.getElementById(`${platform}BudgetRow`);
+  const budgetInput = document.getElementById(`${platform}BudgetInput`);
+  const btn    = document.getElementById('startConnectionBtn');
+
+  if (budgetRow) budgetRow.style.display = type === 'auction' ? '' : 'none';
+
+  if (type === 'auction') {
+    const budget = parseInt(budgetInput?.value) || 0;
+    if (btn) btn.disabled = budget < 1;
+  } else {
+    if (btn) btn.disabled = false;
+  }
+}
+
+/* ── Auction budget computation ────────────────────────────── */
+function computeAuctionBudgets() {
+  const spent = {};
+  state.players.forEach(p => {
+    if (p.isDrafted && p.rosterId && p.auctionAmount) {
+      spent[p.rosterId] = (spent[p.rosterId] || 0) + p.auctionAmount;
+    }
+  });
+  state.league.auctionSpent = spent;
+}
+
+function updateBidAmount(playerId, value) {
+  const p = state.players.find(x => x.id === playerId);
+  if (!p) return;
+  p.auctionAmount = parseInt(value) || 0;
+  computeAuctionBudgets();
+  saveState();
+  // Update budget bars without full re-render
   if (state.leagueViewActive) renderLeagueView();
 }
 
