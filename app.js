@@ -849,6 +849,12 @@ function onDrop(e) {
   src.rankLocked = true;
   sorted.forEach((p, i) => { p.rank = i + 1; });
 
+  // In position-filtered view, adopt target's tier when crossing a tier boundary
+  if (state.posFilter !== 'ALL' && tgt.tier != null && src.tier !== tgt.tier) {
+    src.tier = tgt.tier;
+    src.tierLocked = true;
+  }
+
   if (!state.players.some(p => p.isDrafted)) computeTiers();
   saveState();
   renderPlayers();

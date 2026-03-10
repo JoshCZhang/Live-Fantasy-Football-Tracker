@@ -1428,7 +1428,7 @@ code {
   transition: opacity .15s;
 }
 .tier-pill:hover { opacity: .75; }
-.tier-pill[data-locked="1"] { border-style: dashed; }
+.tier-pill[data-locked="1"] { border-style: solid; }
 
 .tier-pill-none { color: var(--text3); background: transparent; }
 .tier-pill-1 { background: rgba(251,191,36,.18); color: #fbbf24; border-color: rgba(251,191,36,.4); }
