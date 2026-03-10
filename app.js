@@ -521,9 +521,11 @@ function renderPlayers() {
     if (state.posFilter !== 'ALL') {
       let html = '';
       let lastTier = null;
+      const colCount = Array.from(document.querySelectorAll('#playerTable thead th'))
+        .filter(th => getComputedStyle(th).display !== 'none').length;
       for (const p of players) {
         if (p.tier !== lastTier) {
-          html += `<tr class="tier-divider"><td colspan="11">— Tier ${p.tier ?? '?'} ${p.position} —</td></tr>`;
+          html += `<tr class="tier-divider"><td colspan="${colCount}">— Tier ${p.tier ?? '?'} ${p.position} —</td></tr>`;
           lastTier = p.tier;
         }
         html += buildRow(p);
