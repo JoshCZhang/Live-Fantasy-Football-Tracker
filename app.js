@@ -39,8 +39,8 @@ const TIER_BANDS = {
   RB:  [4, 10, 18, 28, 38],
   WR:  [4, 10, 18, 28, 38],
   TE:  [2, 6, 12, 20, 30],
-  K:   [5],
-  DST: [5],
+  K:   [3, 6, 9, 12, 15],
+  DST: [3, 6, 9, 12, 15],
 };
 
 /* ── NFL Team Colors ───────────────────────────────────────── */
@@ -525,8 +525,28 @@ function renderPlayers() {
         .filter(th => getComputedStyle(th).display !== 'none').length;
       for (const p of players) {
         if (p.tier !== lastTier) {
-          html += `<tr class="tier-divider"><td colspan="${colCount}">— Tier ${p.tier ?? '?'} ${p.position} —</td></tr>`;
+          html += `<tr class="tier-divider" data-tier="${p.tier ?? 0}"><td colspan="${colCount}">— Tier ${p.tier ?? '?'} ${p.position} —</td></tr>`;
           lastTier = p.tier;
+        }
+        html += buildRow(p);
+      }
+      tbody.innerHTML = html;
+    } else if (state.draftMode === 'auction') {
+      const sorted = [...players].sort((a, b) => {
+        const ta = a.tier ?? 999;
+        const tb = b.tier ?? 999;
+        if (ta !== tb) return ta - tb;
+        return a.rank - b.rank;
+      });
+      let html = '';
+      let lastTier = null;
+      const colCount = Array.from(document.querySelectorAll('#playerTable thead th'))
+        .filter(th => getComputedStyle(th).display !== 'none').length;
+      for (const p of sorted) {
+        const t = p.tier ?? 999;
+        if (t !== lastTier) {
+          html += `<tr class="tier-divider" data-tier="${p.tier ?? 0}"><td colspan="${colCount}">— Tier ${p.tier ?? '?'} —</td></tr>`;
+          lastTier = t;
         }
         html += buildRow(p);
       }
@@ -566,7 +586,7 @@ function buildRow(player) {
     }).join('');
 
   return `<tr class="player-row ${player.isDrafted ? 'drafted' : ''} ${isMyMan ? 'my-man' : ''}"
-             data-id="${player.id}" data-rank="${player.rank}" draggable="true">
+             data-id="${player.id}" data-rank="${player.rank}" data-tier="${player.tier ?? 0}" draggable="true">
     <td class="col-drag">
       <div class="drag-handle" title="Drag to reorder">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
@@ -1002,7 +1022,7 @@ function onDrop(e) {
   sorted.forEach((p, i) => { p.rank = i + 1; });
 
   // In position-filtered view, adopt target's tier when crossing a tier boundary
-  if (state.posFilter !== 'ALL' && tgt.tier != null && src.tier !== tgt.tier) {
+  if ((state.posFilter !== 'ALL' || state.draftMode === 'auction') && tgt.tier != null && src.tier !== tgt.tier) {
     src.tier = tgt.tier;
     src.tierLocked = true;
   }
