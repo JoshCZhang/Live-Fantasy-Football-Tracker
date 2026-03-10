@@ -59,6 +59,10 @@
       <div class="last-updated" id="lastUpdated"></div>
     </div>
     <div class="connection-right">
+      <div class="mode-toggle" id="modeToggle">
+        <button class="mode-btn active" id="modeDraft" onclick="setDraftMode('draft')">Draft</button>
+        <button class="mode-btn" id="modeAuction" onclick="setDraftMode('auction')">Auction</button>
+      </div>
       <button class="btn btn-ghost" id="saveRankingsBtn" title="Save/load ranking snapshots">📋 Save Your Rankings!</button>
       <button class="btn btn-ghost" id="importBtn" title="Import rankings">↑ Import</button>
       <button class="btn btn-ghost" id="exportBtn" title="Export rankings">↓ Export</button>
@@ -95,10 +99,12 @@
             <th class="col-tags">TAGS</th>
             <th class="col-spacer"></th>
             <th class="col-pos">POS</th>
-            <th class="col-adp" title="Sleeper Average Draft Position">ADP</th>
+            <th class="col-adp col-snake-only" title="Sleeper Average Draft Position">ADP</th>
+            <th class="col-ideal-bid col-auction-only" title="Your target price for this player">IDEAL BID</th>
             <th class="col-tier" title="Position tier (click pill to override, right-click to reset)">TIER</th>
             <th class="col-drafted">DRAFTED?</th>
-            <th class="col-pick">PICK</th>
+            <th class="col-pick col-snake-only">PICK</th>
+            <th class="col-final-bid col-auction-only">INPUT FINAL BID</th>
           </tr>
         </thead>
         <tbody id="playerTableBody"></tbody>
@@ -164,6 +170,15 @@
         <input type="text" id="espnMyTeamInput" class="cfg-input" placeholder="e.g. The Gronkowski Effect">
         <label class="input-label">Season Year <span style="font-weight:400;color:var(--text3)">(optional — defaults to current year)</span></label>
         <input type="text" id="espnYearInput" class="cfg-input" placeholder="2025">
+        <label class="input-label">Draft Type</label>
+        <div class="draft-type-radio">
+          <label><input type="radio" name="espnDraftType" value="draft" checked onchange="validateDraftTypeInputs('espn')"> Draft</label>
+          <label><input type="radio" name="espnDraftType" value="auction" onchange="validateDraftTypeInputs('espn')"> Auction</label>
+        </div>
+        <div class="auction-budget-row" id="espnBudgetRow" style="display:none">
+          <label class="input-label">Salary Cap Per Team <span class="required-star">*</span></label>
+          <input type="number" id="espnBudgetInput" class="cfg-input" placeholder="e.g. 200" min="1" oninput="validateDraftTypeInputs('espn')">
+        </div>
         <p class="cfg-note cfg-warn">⚠ ESPN restricts cross-origin requests for private leagues. Works best for public leagues. Updates poll every 15 seconds.</p>
       </div>
 
@@ -173,6 +188,15 @@
         <input type="text" id="yahooLeagueKeyInput" class="cfg-input" placeholder="e.g. 449.l.12345678">
         <label class="input-label">Your Team Name <span style="font-weight:400;color:var(--text3)">(optional — highlights your team in League View)</span></label>
         <input type="text" id="yahooMyTeamInput" class="cfg-input" placeholder="e.g. The Gronkowski Effect">
+        <label class="input-label">Draft Type</label>
+        <div class="draft-type-radio">
+          <label><input type="radio" name="yahooDraftType" value="draft" checked onchange="validateDraftTypeInputs('yahoo')"> Draft</label>
+          <label><input type="radio" name="yahooDraftType" value="auction" onchange="validateDraftTypeInputs('yahoo')"> Auction</label>
+        </div>
+        <div class="auction-budget-row" id="yahooBudgetRow" style="display:none">
+          <label class="input-label">Salary Cap Per Team <span class="required-star">*</span></label>
+          <input type="number" id="yahooBudgetInput" class="cfg-input" placeholder="e.g. 200" min="1" oninput="validateDraftTypeInputs('yahoo')">
+        </div>
         <p class="cfg-note cfg-warn">⚠ Yahoo Fantasy requires you to be logged in. Polls draft results every 15 seconds. Private leagues may need Yahoo login cookies present in this browser session.</p>
       </div>
 
@@ -199,6 +223,7 @@
     <div class="modal-body">
       <div class="tag-editor" id="tagEditor"></div>
       <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="clearAllTags()">Clear All Tags</button>
         <button class="btn btn-ghost" data-modal="tagModal">Close</button>
       </div>
     </div>

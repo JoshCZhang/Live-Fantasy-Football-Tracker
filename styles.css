@@ -388,6 +388,7 @@ body {
   flex: 1;
   overflow-y: auto;
   overflow-x: auto;
+  scrollbar-gutter: stable;
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
 }
@@ -1475,3 +1476,138 @@ code {
   border-color: rgba(37,99,235,.4);
   color: var(--wr);
 }
+
+/* ============================================================
+   AUCTION DRAFT STYLES
+   ============================================================ */
+
+/* ── Draft/Auction mode toggle ─────────────────────────────── */
+.mode-toggle {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.mode-btn {
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  color: var(--text2);
+  transition: background .15s, color .15s;
+}
+.mode-btn:hover { background: var(--bg-hover); color: var(--text); }
+.mode-btn.active {
+  background: rgba(37,99,235,.2);
+  color: #60a5fa;
+}
+
+/* ── Column show/hide via body class ───────────────────────── */
+.col-snake-only,  th.col-snake-only  { }
+.col-auction-only, th.col-auction-only { display: none; }
+body.auction-mode .col-snake-only,  body.auction-mode th.col-snake-only  { display: none; }
+body.auction-mode .col-auction-only, body.auction-mode th.col-auction-only { display: table-cell; }
+
+/* ── Ideal bid cell ────────────────────────────────────────── */
+.col-ideal-bid { width: 72px; min-width: 72px; text-align: center; }
+.ideal-bid-val {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: background .1s;
+}
+.ideal-bid-val:hover { background: var(--bg-hover); color: var(--text); }
+.ideal-bid-input-edit {
+  width: 56px;
+  padding: 2px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--bg3);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  color: var(--text);
+  text-align: center;
+}
+
+/* ── Final bid column ──────────────────────────────────────── */
+.col-final-bid { width: 130px; min-width: 130px; text-align: center; }
+.final-bid-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+.final-bid-val {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text3);
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: background .1s;
+}
+.final-bid-val:hover { background: var(--bg-hover); color: var(--text); }
+.final-bid-val--set  { color: var(--text); }
+.final-bid-input-edit {
+  width: 64px;
+  padding: 2px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--bg3);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  text-align: center;
+}
+.final-bid-input-edit:focus { outline: none; }
+
+/* ── Value delta ───────────────────────────────────────────── */
+.value-delta {
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 3px;
+  padding: 1px 4px;
+  white-space: nowrap;
+}
+.value-delta--good { color: #4ade80; background: rgba(74,222,128,.12); }
+.value-delta--bad  { color: #f87171; background: rgba(248,113,113,.12); }
+
+/* ── Connect modal: draft type inputs ──────────────────────── */
+.draft-type-radio {
+  display: flex;
+  gap: 16px;
+  padding: 6px 0;
+  font-size: 13px;
+  color: var(--text);
+}
+.draft-type-radio label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+.required-star { color: #f87171; font-size: 11px; }
+
+/* ── League view: auction budget bar ──────────────────────── */
+.lv-budget-bar-wrap {
+  height: 4px;
+  background: var(--bg-hover);
+  border-radius: 2px;
+  margin: 4px 10px 0;
+  overflow: hidden;
+}
+.lv-budget-bar {
+  height: 100%;
+  border-radius: 2px;
+  transition: width .3s;
+}
+.lv-budget-text {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 10px 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.lv-budget-spent { color: var(--text3); }
