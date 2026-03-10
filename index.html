@@ -97,7 +97,6 @@
             <th class="col-rank" title="Your custom ranking">RANK</th>
             <th class="col-player">PLAYER</th>
             <th class="col-tags">TAGS</th>
-            <th class="col-spacer"></th>
             <th class="col-pos">POS</th>
             <th class="col-adp col-snake-only" title="Sleeper Average Draft Position">ADP</th>
             <th class="col-ideal-bid col-auction-only" title="Your target price for this player">IDEAL BID</th>
@@ -105,6 +104,7 @@
             <th class="col-drafted">DRAFTED?</th>
             <th class="col-pick col-snake-only">PICK</th>
             <th class="col-final-bid col-auction-only">INPUT FINAL BID</th>
+            <th class="col-spacer"></th>
           </tr>
         </thead>
         <tbody id="playerTableBody"></tbody>
@@ -223,6 +223,7 @@
     <div class="modal-body">
       <div class="tag-editor" id="tagEditor"></div>
       <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="clearAllTags()">Clear All Tags</button>
         <button class="btn btn-ghost" data-modal="tagModal">Close</button>
       </div>
     </div>
