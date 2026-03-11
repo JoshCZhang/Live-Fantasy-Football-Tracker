@@ -437,6 +437,7 @@ body {
 .player-table td.col-adp      { text-align: center; color: var(--text2); font-size: 12px; }
 .player-table th.col-ideal-bid { text-align: center; padding-left: 0; padding-right: 20px; }
 .player-table td.col-ideal-bid { padding-left: 0; padding-right: 20px; }
+.player-table th.col-final-bid { text-align: center; }
 .col-drafted     { width: 110px; min-width: 110px; }
 .col-pick        { width: 80px;  min-width: 80px; }
 .col-spacer      { width: auto;  min-width: 0; padding: 0; }
