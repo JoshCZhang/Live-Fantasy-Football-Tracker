@@ -1909,6 +1909,7 @@ function initEventListeners() {
       p.rosterId      = null;
       p.tags          = [];
       p.auctionAmount = null;
+      p.idealBid      = 0;
     });
     state.connection.knownPickNos = new Set();
     state.connection.recentPicks  = [];
