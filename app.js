@@ -608,6 +608,7 @@ function buildRow(player) {
     <td class="col-rank">
       <span class="rank-num" onclick="startRankEdit(event, ${player.id})" title="Click to move to a specific rank">${player.rank}</span>
     </td>
+    <td class="col-tier">${buildTierPill(player)}</td>
     <td class="col-player">
       <div class="player-info">
         <div class="player-avatar" style="background:${teamColor};color:#fff;font-size:10px;letter-spacing:-.3px">${esc(avatarText)}</div>
@@ -627,7 +628,6 @@ function buildRow(player) {
     </td>
     <td class="col-adp col-snake-only">${player.adp != null ? player.adp.toFixed(1) : '—'}</td>
     <td class="col-ideal-bid col-auction-only">${buildIdealBidCell(player)}</td>
-    <td class="col-tier">${buildTierPill(player)}</td>
     <td class="col-drafted">
       <button class="drafted-btn ${player.isDrafted ? 'is-drafted' : ''}"
               onclick="toggleDrafted(${player.id})">

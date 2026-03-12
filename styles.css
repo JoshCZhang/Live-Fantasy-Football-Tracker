@@ -1460,9 +1460,6 @@ code {
 .tier-divider[data-tier="5"] td { color: #6b7280; border-color: rgba(100,116,139,.2); }
 .tier-divider[data-tier="6"] td { color: #4b5563; border-color: rgba(100,116,139,.15); }
 
-.player-row[data-tier="1"] td { background: rgba(251,191,36,.03); }
-.player-row[data-tier="2"] td { background: rgba(210,215,220,.02); }
-.player-row[data-tier="3"] td { background: rgba(184,115,51,.025); }
 
 .tier-dropdown {
   background: var(--bg3, #1c2128);
