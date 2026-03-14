@@ -266,6 +266,23 @@
   </div>
 </div>
 
+<!-- ===== SYNC ERROR MODAL ===== -->
+<div class="modal-overlay" id="syncErrorModal">
+  <div class="modal" style="max-width:420px;text-align:center">
+    <div class="modal-header">
+      <h2>Player Database Unavailable</h2>
+      <button class="modal-close" data-modal="syncErrorModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>The player database could not be refreshed from Sleeper. Your existing player list is being used.</p>
+      <p>Please sync manually when your connection is available.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" id="syncErrorDismiss">Understood</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== TOAST ===== -->
 <div class="toast" id="toast"></div>
 
