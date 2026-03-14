@@ -244,6 +244,23 @@ const DEFAULT_PLAYERS_RAW = [
   { name: 'Bears',                team: 'CHI', position: 'DST' },
   { name: 'Vikings',              team: 'MIN', position: 'DST' },
   { name: 'Texans',               team: 'HOU', position: 'DST' },
+  { name: 'Cardinals',            team: 'ARI', position: 'DST' },
+  { name: 'Falcons',              team: 'ATL', position: 'DST' },
+  { name: 'Panthers',             team: 'CAR', position: 'DST' },
+  { name: 'Bengals',              team: 'CIN', position: 'DST' },
+  { name: 'Lions',                team: 'DET', position: 'DST' },
+  { name: 'Packers',              team: 'GB',  position: 'DST' },
+  { name: 'Colts',                team: 'IND', position: 'DST' },
+  { name: 'Jaguars',              team: 'JAX', position: 'DST' },
+  { name: 'Chargers',             team: 'LAC', position: 'DST' },
+  { name: 'Rams',                 team: 'LAR', position: 'DST' },
+  { name: 'Raiders',              team: 'LV',  position: 'DST' },
+  { name: 'Patriots',             team: 'NE',  position: 'DST' },
+  { name: 'Saints',               team: 'NO',  position: 'DST' },
+  { name: 'Giants',               team: 'NYG', position: 'DST' },
+  { name: 'Seahawks',             team: 'SEA', position: 'DST' },
+  { name: 'Titans',               team: 'TEN', position: 'DST' },
+  { name: 'Commanders',           team: 'WAS', position: 'DST' },
 ];
 
 /* ============================================================
