@@ -244,6 +244,23 @@ const DEFAULT_PLAYERS_RAW = [
   { name: 'Bears',                team: 'CHI', position: 'DST' },
   { name: 'Vikings',              team: 'MIN', position: 'DST' },
   { name: 'Texans',               team: 'HOU', position: 'DST' },
+  { name: 'Cardinals',            team: 'ARI', position: 'DST' },
+  { name: 'Falcons',              team: 'ATL', position: 'DST' },
+  { name: 'Panthers',             team: 'CAR', position: 'DST' },
+  { name: 'Bengals',              team: 'CIN', position: 'DST' },
+  { name: 'Lions',                team: 'DET', position: 'DST' },
+  { name: 'Packers',              team: 'GB',  position: 'DST' },
+  { name: 'Colts',                team: 'IND', position: 'DST' },
+  { name: 'Jaguars',              team: 'JAX', position: 'DST' },
+  { name: 'Chargers',             team: 'LAC', position: 'DST' },
+  { name: 'Rams',                 team: 'LAR', position: 'DST' },
+  { name: 'Raiders',              team: 'LV',  position: 'DST' },
+  { name: 'Patriots',             team: 'NE',  position: 'DST' },
+  { name: 'Saints',               team: 'NO',  position: 'DST' },
+  { name: 'Giants',               team: 'NYG', position: 'DST' },
+  { name: 'Seahawks',             team: 'SEA', position: 'DST' },
+  { name: 'Titans',               team: 'TEN', position: 'DST' },
+  { name: 'Commanders',           team: 'WAS', position: 'DST' },
 ];
 
 /* ============================================================
@@ -1770,6 +1787,10 @@ function showToast(msg, type = 'info') {
   toastTimer = setTimeout(() => { el.classList.remove('show'); }, 3000);
 }
 
+function showSyncErrorModal() {
+  openModal('syncErrorModal');
+}
+
 /* ============================================================
    SECTION 18 — UTILITIES
    ============================================================ */
@@ -1932,6 +1953,8 @@ function initEventListeners() {
   document.querySelectorAll('[data-modal]').forEach(btn => {
     btn.addEventListener('click', () => closeModal(btn.dataset.modal));
   });
+
+  document.getElementById('syncErrorDismiss').addEventListener('click', () => closeModal('syncErrorModal'));
 
   // Close modal on overlay click
   document.querySelectorAll('.modal-overlay').forEach(overlay => {
@@ -2388,8 +2411,8 @@ function buildInjuryBadge(status) {
    ============================================================ */
 
 async function checkAndRefreshPlayers() {
-  let cached    = null;
-  let cacheAge  = Infinity;
+  let cached   = null;
+  let cacheAge = Infinity;
 
   try {
     const raw = localStorage.getItem(PLAYER_CACHE_KEY);
@@ -2400,10 +2423,9 @@ async function checkAndRefreshPlayers() {
   } catch(e) { /* corrupt cache — ignore */ }
 
   const isFirstLoad = state.players.length === 0;
-  const isFresh     = cacheAge < CACHE_TTL_MS;
 
-  if (isFresh && cached?.players?.length) {
-    // ── Fresh cache: apply metadata updates silently ──────────
+  // ── Apply cache immediately for instant render ────────────
+  if (cached?.players?.length) {
     if (isFirstLoad) {
       buildPlayersFromSleeperList(cached.players);
     } else {
@@ -2412,15 +2434,13 @@ async function checkAndRefreshPlayers() {
     reapplyAdpRanks();
     updateDataFreshness(new Date(cached.timestamp));
     renderAll();
-    return;
+  } else if (isFirstLoad) {
+    // No cache at all — show loading overlay while we fetch
+    showLoadingOverlay('Fetching latest player data from Sleeper…');
   }
 
-  // ── Need a network fetch ──────────────────────────────────
-  if (isFirstLoad) {
-    showLoadingOverlay('Fetching latest player data from Sleeper…');
-  } else {
-    updateDataFreshness(cached ? new Date(cached.timestamp) : null, true);
-  }
+  // ── Always attempt a network fetch ───────────────────────
+  updateDataFreshness(cached ? new Date(cached.timestamp) : null, true);
 
   try {
     const [players, adpMap] = await Promise.all([
@@ -2429,7 +2449,7 @@ async function checkAndRefreshPlayers() {
     ]);
     localStorage.setItem(PLAYER_CACHE_KEY, JSON.stringify({ timestamp: Date.now(), players }));
 
-    if (isFirstLoad || state.players.length === 0) {
+    if (state.players.length === 0) {
       buildPlayersFromSleeperList(players);
     } else {
       applyPlayerMetadata(players);
@@ -2443,7 +2463,6 @@ async function checkAndRefreshPlayers() {
     hideLoadingOverlay();
     saveState();
     renderAll();
-    if (!isFirstLoad) showToast('Player data refreshed from Sleeper', 'success');
 
   } catch(err) {
     console.warn('Sleeper player refresh failed:', err);
@@ -2454,7 +2473,7 @@ async function checkAndRefreshPlayers() {
       renderAll();
     }
     updateDataFreshness(cached ? new Date(cached.timestamp) : null);
-    showToast('Could not reach Sleeper — using cached player list', 'error');
+    showSyncErrorModal();
   }
 }
 
@@ -2602,10 +2621,8 @@ function reapplySleeperRanks() {
 /** Add Sleeper players that don't exist in our board yet (trades, rookies, etc.) */
 function addNewSleeperPlayers(sleeperPlayers) {
   let maxRank = Math.max(0, ...state.players.map(p => p.rank));
-  let added   = 0;
 
   for (const sp of sleeperPlayers) {
-    if (added >= 30) break;
     const exists = state.players.some(p =>
       p.name.toLowerCase() === sp.name.toLowerCase() && p.position === sp.position
     );
@@ -2626,7 +2643,6 @@ function addNewSleeperPlayers(sleeperPlayers) {
         sleeperId:    sp.sleeperId,
         adp:          null,
       });
-      added++;
     }
   }
 }
