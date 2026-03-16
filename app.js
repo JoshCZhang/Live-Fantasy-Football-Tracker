@@ -1254,7 +1254,7 @@ function processSleeperPick(pick) {
   if (player) {
     player.isDrafted = true;
     player.draftPick = pick.pick_no;
-    player.rosterId  = pick.roster_id || null;
+    player.rosterId  = pick.roster_id || pick.draft_slot || null;
     player.draftedBy = meta.owner_id
       ? (meta.owner_id.toString().substring(0, 10))
       : null;
@@ -2106,7 +2106,7 @@ function renderLeagueView() {
   if (subtitle) subtitle.textContent = `${numTeams} teams · ${drafted.length} picks`;
 
   const allHaveRoster = drafted.every(p => p.rosterId);
-  const note = (!allHaveRoster && state.connection.platform !== 'sleeper')
+  const note = !allHaveRoster
     ? `<div class="lv-note">⚠ Team assignments estimated via snake-draft math. Connect via Sleeper for exact team data.</div>`
     : '';
 
