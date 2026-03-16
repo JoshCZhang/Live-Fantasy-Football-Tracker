@@ -1211,6 +1211,19 @@ async function pollSleeperPicks(draftId) {
         state.connection.knownPickNos.add(pick.pick_no);
         processSleeperPick(pick);
         changed = true;
+      } else if (state.draftMode === 'auction') {
+        // Pick already known — but if auctionAmount wasn't captured on first pass
+        // (e.g. meta.amount was absent), try to fill it in from the current response.
+        const syncedAmount = parseInt((pick.metadata || {}).amount) || null;
+        if (syncedAmount) {
+          const meta = pick.metadata || {};
+          const fullName = `${meta.first_name || ''} ${meta.last_name || ''}`.trim();
+          const player = matchPlayerByName(fullName, meta.position || '');
+          if (player && !player.auctionAmount) {
+            player.auctionAmount = syncedAmount;
+            changed = true;
+          }
+        }
       }
     }
 
