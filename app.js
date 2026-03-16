@@ -530,6 +530,8 @@ function renderAll() {
   modeAuctionBtn?.classList.toggle('active', state.draftMode === 'auction');
   modeDraftBtn?.classList.toggle('locked',   isConnected && state.draftMode !== 'draft');
   modeAuctionBtn?.classList.toggle('locked', isConnected && state.draftMode !== 'auction');
+  const mockNotice = document.getElementById('mockDraftNotice');
+  if (mockNotice) mockNotice.style.display = state.draftMode === 'auction' ? '' : 'none';
 }
 
 function renderPlayers() {
