@@ -1520,18 +1520,6 @@ code {
   background: rgba(37,99,235,.2);
   color: #60a5fa;
 }
-.mock-draft-notice {
-  font-size: 11px;
-  font-weight: 600;
-  color: #f59e0b;
-  background: rgba(245,158,11,0.12);
-  border: 1px solid rgba(245,158,11,0.35);
-  border-radius: 4px;
-  padding: 3px 8px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
 /* ── Column show/hide via body class ───────────────────────── */
 .col-snake-only,  th.col-snake-only  { }
 .col-auction-only, th.col-auction-only { display: none; }
