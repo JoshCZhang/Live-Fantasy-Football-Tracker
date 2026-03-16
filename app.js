@@ -530,6 +530,8 @@ function renderAll() {
   modeAuctionBtn?.classList.toggle('active', state.draftMode === 'auction');
   modeDraftBtn?.classList.toggle('locked',   isConnected && state.draftMode !== 'draft');
   modeAuctionBtn?.classList.toggle('locked', isConnected && state.draftMode !== 'auction');
+  const mockNotice = document.getElementById('mockDraftNotice');
+  if (mockNotice) mockNotice.style.display = state.draftMode === 'auction' ? '' : 'none';
 }
 
 function renderPlayers() {
@@ -1211,6 +1213,19 @@ async function pollSleeperPicks(draftId) {
         state.connection.knownPickNos.add(pick.pick_no);
         processSleeperPick(pick);
         changed = true;
+      } else if (state.draftMode === 'auction') {
+        // Pick already known — but if auctionAmount wasn't captured on first pass
+        // (e.g. meta.amount was absent), try to fill it in from the current response.
+        const syncedAmount = parseInt((pick.metadata || {}).amount) || null;
+        if (syncedAmount) {
+          const meta = pick.metadata || {};
+          const fullName = `${meta.first_name || ''} ${meta.last_name || ''}`.trim();
+          const player = matchPlayerByName(fullName, meta.position || '');
+          if (player && !player.auctionAmount) {
+            player.auctionAmount = syncedAmount;
+            changed = true;
+          }
+        }
       }
     }
 
@@ -1241,7 +1256,7 @@ function processSleeperPick(pick) {
   if (player) {
     player.isDrafted = true;
     player.draftPick = pick.pick_no;
-    player.rosterId  = pick.roster_id || null;
+    player.rosterId  = pick.roster_id || pick.draft_slot || null;
     player.draftedBy = meta.owner_id
       ? (meta.owner_id.toString().substring(0, 10))
       : null;
@@ -2093,7 +2108,7 @@ function renderLeagueView() {
   if (subtitle) subtitle.textContent = `${numTeams} teams · ${drafted.length} picks`;
 
   const allHaveRoster = drafted.every(p => p.rosterId);
-  const note = (!allHaveRoster && state.connection.platform !== 'sleeper')
+  const note = !allHaveRoster
     ? `<div class="lv-note">⚠ Team assignments estimated via snake-draft math. Connect via Sleeper for exact team data.</div>`
     : '';
 
